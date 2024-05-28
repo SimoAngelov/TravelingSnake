@@ -12,39 +12,39 @@ class Dir(Enum):
     Down = 2
     Left = 3
 
-def get_next_pos(pos, dir : Dir):
+def get_next_pos(pos, dir: Dir):
     if not isinstance(dir, Dir):
         raise TypeError("dir is not type Dir")
     offsets = {
-        Dir.Up : np.array([0, 1]),
-        Dir.Right: np.array([1, 0]),
-        Dir.Down : np.array([0, -1]),
-        Dir.Left : np.array([-1, 0])
+        Dir.Up: create_pos(y = 1),
+        Dir.Right: create_pos(x = 1),
+        Dir.Down: create_pos(y = -1),
+        Dir.Left: create_pos(x = -1)
     }
-    next_pos = pos + offsets.get(dir, np.zeros(Axis.COUNT))
+    next_pos = pos + offsets.get(dir, create_pos())
     return next_pos
 
-def is_dir(mask : np.int8, dir : Dir):
+def is_dir(mask: np.int8, dir: Dir):
     if not isinstance(dir, Dir):
         raise TypeError("dir is not type Dir")
     return bool((mask >> dir.value) & 1)
 
-def set_dir(mask : np.int8, dir : Dir):
+def set_dir(mask: np.int8, dir: Dir):
     if not isinstance(dir, Dir):
         raise TypeError("dir is not type Dir")
     return mask | 1 << dir.value
 
-def get_square(pos, w : np.int64):
+def get_square(pos, w: np.int64):
     return np.int64(pos[Axis.X] + pos[Axis.Y] * w)
 
-
 def generate(w, h):
-    hamilton_cycle = np.zeros(np.int64(w * h), dtype=np.int64)
     transitions = np.zeros(np.int64((w / 2) * (h / 2)), dtype=np.int8)
     transitions = generate_r([-1, -1], [0, 0], w / 2, h / 2, transitions)
     print(f'generate(w: {w}, h: {h}), transitions: {transitions}')
-    return hamilton_cycle
+    return generate_hamilton_cycle(w, h, transitions)
 
+def create_pos(x = 0, y = 0):
+    return np.array([x, y], dtype = np.int64)
 
 def generate_r(prev_pos, pos, w, h, transitions):
     if pos[Axis.X] < 0 or pos[Axis.Y] < 0 or pos[Axis.X] >= w or pos[Axis.Y] >= h:
@@ -81,5 +81,25 @@ def generate_r(prev_pos, pos, w, h, transitions):
 
     return transitions
 
-def generate_hamilton_cycle():
-    pass
+def generate_hamilton_cycle(w, h, transitions):
+    hamilton_cycle = np.zeros(np.int64(w * h), dtype=np.int64)
+    can_go = lambda dir, pos: is_dir(transitions[get_square(pos, w)], dir)
+    start_pos = create_pos()
+    pos = np.copy(start_pos)
+    start_dir = Dir.Up if can_go(Dir.Down, pos) else Dir.Left
+    dir = start_dir
+    curr_square = 0
+
+    while True:
+        next_dir = dir # todo implement find_next_dir
+        #todo set hamilton_cycle at current square
+        curr_square += 1
+        dir = next_dir
+        pos = get_next_pos(pos, next_dir)
+
+        pos_squared = pos ** 2
+
+
+        # Terminate generator loop
+        if curr_square >= hamilton_cycle.size:
+            break
