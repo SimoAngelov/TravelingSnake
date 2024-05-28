@@ -111,13 +111,19 @@ class MyGame(arcade.Window):
         self.setup()
         self.set_update_rate(1/FPS)
 
+        a = np.array([1, 2, 3])
+        b = np.array([4, 5, 6])
+        c = a + b
+        print (f'a[{a}], b[{b}], c[{c}]')
+
+        hcg.generate(W, H)
+
     def setup(self):
         """ Set up the game variables. Call to re-start the game. """
         global global_snake, food, curr_direction
         food = 10#create_food(global_snake)
         global_snake = np.array([11, 1, 0])
         curr_direction = np.zeros(2)
-        hcg.generate(W, H)
 
     def on_draw(self):
         """
