@@ -11,6 +11,10 @@ import arcade
 
 import numpy as np
 
+import hamilton_cycle_generator as hcg
+from hamilton_cycle_generator import Dir
+
+
 SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 600
 SCREEN_TITLE = "Starting Template"
@@ -21,16 +25,26 @@ W = np.int64(SCREEN_WIDTH / SQUARE)
 H = np.int64(SCREEN_HEIGHT / SQUARE)
 
 curr_direction = np.zeros(2)
+
+enum_dirs = {
+    arcade.key.W : Dir.Up,
+    arcade.key.S: Dir.Down,
+    arcade.key.A: Dir.Left,
+    arcade.key.D: Dir.Right
+}
+
 directions = {
     arcade.key.W : [0, 1],
     arcade.key.A: [-1, 0],
     arcade.key.S: [0, -1],
     arcade.key.D: [1, 0]
 }
+
 X = 0
 Y = 1
 
 food = 0
+
 
 
 def get_direction(key_code):
@@ -100,9 +114,10 @@ class MyGame(arcade.Window):
     def setup(self):
         """ Set up the game variables. Call to re-start the game. """
         global global_snake, food, curr_direction
-        food = create_food(global_snake)
-        global_snake = np.array([0])
+        food = 10#create_food(global_snake)
+        global_snake = np.array([11, 1, 0])
         curr_direction = np.zeros(2)
+        hcg.generate(W, H)
 
     def on_draw(self):
         """
@@ -125,10 +140,7 @@ class MyGame(arcade.Window):
         need it.
         """
         global curr_direction, global_snake, food
-        if curr_direction[X] != 0 or curr_direction[Y] != 0:
-            global_snake, food = move(global_snake, curr_direction, food)
-            if (global_snake.size == 0):
-                self.setup()
+
 
 
     def on_key_press(self, key, key_modifiers):
@@ -140,7 +152,16 @@ class MyGame(arcade.Window):
         """
         global curr_direction, global_snake, food
         curr_direction = get_direction(key)
-        print(f'curr_direction[{curr_direction}]')
+        if curr_direction[X] != 0 or curr_direction[Y] != 0:
+            global_snake, food = move(global_snake, curr_direction, food)
+            print(f'curr_direction[{curr_direction}], UP[{Dir.Up.value}]')
+            enum_dir = enum_dirs.get(key)
+            local_dir = 0
+            local_dir = hcg.set_dir(local_dir, Dir.Up)
+            local_dir = hcg.set_dir(local_dir, Dir.Left)
+            print(f'is enum_dir[{enum_dir}] in local_dir[{np.binary_repr(local_dir)}] -> {hcg.is_dir(local_dir, enum_dir)}')
+            if (global_snake.size == 0):
+                self.setup()
 
 
     def on_key_release(self, key, key_modifiers):
