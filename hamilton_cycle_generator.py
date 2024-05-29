@@ -16,9 +16,9 @@ def get_next_pos(pos, dir: Dir):
     if not isinstance(dir, Dir):
         raise TypeError("dir is not type Dir")
     offsets = {
-        Dir.Up: create_pos(y = 1),
+        Dir.Up: create_pos(y = -1),
         Dir.Right: create_pos(x = 1),
-        Dir.Down: create_pos(y = -1),
+        Dir.Down: create_pos(y = 1),
         Dir.Left: create_pos(x = -1)
     }
     next_pos = pos + offsets.get(dir, create_pos())
@@ -34,72 +34,152 @@ def set_dir(mask: np.int8, dir: Dir):
         raise TypeError("dir is not type Dir")
     return mask | 1 << dir.value
 
+def get_dir_array(start: Dir = Dir.Up, offset = 0):
+    if not isinstance(start, Dir):
+        raise TypeError("start is not type Dir")
+    dir_array = np.array(Dir)
+    dir_array = np.roll(dir_array, -start.value + offset)
+    return dir_array
+
 def get_square(pos, w: np.int64):
-    return np.int64(pos[Axis.X] + pos[Axis.Y] * w)
+    square = np.int64(pos[Axis.X] + pos[Axis.Y] * w)
+    return square
 
 def generate(w, h):
-    transitions = np.zeros(np.int64((w / 2) * (h / 2)), dtype=np.int8)
-    transitions = generate_r([-1, -1], [0, 0], w / 2, h / 2, transitions)
-    print(f'generate(w: {w}, h: {h}), transitions: {transitions}')
-    return generate_hamilton_cycle(w, h, transitions)
+    half_w = np.int64(w / 2)
+    half_h = np.int64(h / 2)
+    edges = np.zeros(half_w * half_h, dtype=np.int8)
+    visited = np.zeros(len(edges), dtype=bool)
+    edges = generate_edges(create_pos(-1, -1), create_pos(),
+                            half_w, half_h, edges, visited)
+    print(f'generate(w: {w}, h: {h}), edges: {edges}')
+
+    dirs = get_dir_array()
+    for i in range(edges.size):
+        res = ''
+        for dir in dirs:
+            if is_dir(edges[i], dir):
+                res = f'{res}, {dir}'
+        print(f'edge[{i}]: {res}')
+    return generate_hamilton_cycle(w, h, edges)
 
 def create_pos(x = 0, y = 0):
     return np.array([x, y], dtype = np.int64)
 
-def generate_r(prev_pos, pos, w, h, transitions):
-    if pos[Axis.X] < 0 or pos[Axis.Y] < 0 or pos[Axis.X] >= w or pos[Axis.Y] >= h:
-        return transitions
-    square = get_square(pos, w)
-    trans = transitions[square]
+def find_next_dir(pos, dir: Dir, can_go):
+    # start the array by rolling it one position, so it starts
+    # from left neighbor of dir
+    next_dir_array = get_dir_array(dir, 1)
+    for i in range(next_dir_array.size - 1):
+        # check if we can go in any of the first 3 directions
+        next_dir = next_dir_array[i]
+        if can_go(next_dir, pos):
+            return next_dir
+    # return the inverted dir
+    return next_dir_array[-1]
 
-    if trans != 0:
-        return transitions
+def get_path_square(path, pos, w):
+    square = get_square(pos, w)
+    return path[square]
+
+def set_path_square(path, path_square, pos, w):
+    square = get_square(pos, w)
+    if (path[square] == 0):
+        path[square] = path_square
+
+def generate_edges(prev_pos, pos, w, h, edges, visited):
+    if pos[Axis.X] < 0 or pos[Axis.Y] < 0 or pos[Axis.X] >= w or pos[Axis.Y] >= h:
+        return
+
+    curr_square = get_square(pos, w)
+
+    if visited[curr_square]:
+        return
+    visited[curr_square] = True
 
     # Remove wall between fromX and fromY
+    prev_square = get_square(prev_pos, w)
+    print(f'\n\nprev_pos[{prev_pos}], pos[{pos}], w[{w}], h[{h}], prev_square[{prev_square}] curr_square[{curr_square}]')
     if prev_pos[Axis.X] != -1:
-        if prev_pos[Axis.X] > pos[Axis.X]: trans = set_dir(trans, Dir.Left)
-        if prev_pos[Axis.X] < pos[Axis.X]: trans = set_dir(trans, Dir.Right)
-        if prev_pos[Axis.Y] > pos[Axis.Y]: trans = set_dir(trans, Dir.Down)
-        if prev_pos[Axis.Y] < pos[Axis.Y]: trans = set_dir(trans, Dir.Up)
-    transitions[square] = trans
+        if prev_pos[Axis.X] < pos[Axis.X]:
+            edges[prev_square] = set_dir(edges[prev_square], Dir.Right)
+            edges[curr_square] = set_dir(edges[curr_square], Dir.Left)
+            print(f'Right-Left')
+        elif prev_pos[Axis.X] > pos[Axis.X]:
+            edges[prev_square] = set_dir(edges[prev_square], Dir.Left)
+            edges[curr_square] = set_dir(edges[curr_square], Dir.Right)
+            print(f'Left-Right')
+        elif prev_pos[Axis.Y] < pos[Axis.Y]:
+            edges[prev_square] = set_dir(edges[prev_square], Dir.Down)
+            edges[curr_square] = set_dir(edges[curr_square], Dir.Up)
+            print(f'Down-Up')
+        elif prev_pos[Axis.Y] > pos[Axis.Y]:
+            edges[prev_square] = set_dir(edges[prev_square], Dir.Up)
+            edges[curr_square] = set_dir(edges[curr_square], Dir.Down)
+            print(f'Up-Down')
 
-    # We want to vist the fource connected nodes randomly,
+
+    # We want to vist the four connected nodes randomly,
     # so we just visit two randomly (maybe already visited)
     # then just visit them all non-randomly. It's okay to
     # visit the same node twice.
     directions_array = np.array(Dir)
     rng = np.random.default_rng()
-    for i in range(Axis.COUNT):
-        dir = rng.choice(directions_array)
+
+    #for i in range(Axis.COUNT):
+        #dir = rng.choice(directions_array)
+    for dir in [Dir.Down, Dir.Right]: # test
         next_pos = get_next_pos(pos, dir)
-        transitions = generate_r(pos, next_pos, w, h, transitions)
+        generate_edges(pos, next_pos, w, h, edges, visited)
 
     for i in range(len(directions_array)):
         dir = directions_array[i]
         next_pos = get_next_pos(pos, dir)
-        transitions = generate_r(pos, next_pos, w, h, transitions)
+        generate_edges(pos, next_pos, w, h, edges, visited)
 
-    return transitions
+    return edges
 
-def generate_hamilton_cycle(w, h, transitions):
+def generate_hamilton_cycle(w, h, edges):
     hamilton_cycle = np.zeros(np.int64(w * h), dtype=np.int64)
-    can_go = lambda dir, pos: is_dir(transitions[get_square(pos, w)], dir)
-    start_pos = create_pos()
-    pos = np.copy(start_pos)
-    start_dir = Dir.Up if can_go(Dir.Down, pos) else Dir.Left
-    dir = start_dir
+    def can_go(dir, pos):
+        square = get_square(pos, w / 2)
+        if square >= edges.size:
+            return False
+        return is_dir(edges[square], dir)
+
+    pos = create_pos()
+    dir = Dir.Down
     curr_square = 0
+    start_offsets = np.array([create_pos(y = 1), create_pos(), create_pos(x = 1), create_pos(1, 1)])
 
     while True:
-        next_dir = dir # todo implement find_next_dir
-        #todo set hamilton_cycle at current square
-        curr_square += 1
-        dir = next_dir
-        pos = get_next_pos(pos, next_dir)
-
+        next_dir = find_next_dir(pos, dir, can_go)
         pos_squared = pos ** 2
 
+        # set the current path square
+        dir_array = get_dir_array(dir)
+        offsets = np.roll(start_offsets, -dir.value, Axis.X)
+        offsets_len = len(offsets)
+
+        # print(f'\n\npos[{pos}], pos_squared[{pos_squared}], dir[{dir}], next_dir[{next_dir}], dir_array[{dir_array}], dir.value[{dir.value}]\n\
+        #     start_offsets[{start_offsets}]\n\
+        #     offsets[{offsets}]')
+        set_path_square(hamilton_cycle, curr_square, pos_squared + offsets[0], w)
+        curr_square += 1
+
+        for i in range(1, offsets_len):
+            indices = [j + i - 1 for j in range(offsets_len - i)]
+            directions = dir_array[indices]
+            # print(f'i[{i}], indices[{indices}], directions[{directions}]')
+            if next_dir in directions:
+                set_path_square(hamilton_cycle, curr_square, pos_squared + offsets[i], w)
+                curr_square += 1
+
+        dir = next_dir
+        pos = get_next_pos(pos, next_dir)
 
         # Terminate generator loop
         if curr_square >= hamilton_cycle.size:
             break
+
+    return hamilton_cycle

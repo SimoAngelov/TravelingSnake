@@ -14,13 +14,16 @@ import numpy as np
 import hamilton_cycle_generator as hcg
 from hamilton_cycle_generator import Dir
 
+SQUARE = 60
+NUM_OF_SQUARES = 4
 
-SCREEN_WIDTH = 600
-SCREEN_HEIGHT = 600
+
+SCREEN_WIDTH = np.int64(SQUARE * NUM_OF_SQUARES)
+SCREEN_HEIGHT = np.int64(SQUARE * NUM_OF_SQUARES)
 SCREEN_TITLE = "Starting Template"
 FPS = 5
 
-SQUARE = 60
+
 W = np.int64(SCREEN_WIDTH / SQUARE)
 H = np.int64(SCREEN_HEIGHT / SQUARE)
 
@@ -34,24 +37,25 @@ enum_dirs = {
 }
 
 directions = {
-    arcade.key.W : [0, 1],
-    arcade.key.A: [-1, 0],
-    arcade.key.S: [0, -1],
-    arcade.key.D: [1, 0]
+    arcade.key.W : Dir.Up,
+    arcade.key.A: Dir.Left,
+    arcade.key.S: Dir.Down,
+    arcade.key.D: Dir.Right
 }
 
 X = 0
 Y = 1
 
 food = 0
-
+path = np.empty(shape = 0)
 
 
 def get_direction(key_code):
+    pos = [0, 0]
     dir = directions.get(key_code)
-    if dir == None:
-        dir = [0, 0]
-    return dir
+    if dir is not None:
+        pos = hcg.get_next_pos(pos, dir)
+    return pos
 
 def create_empty_snake():
     return np.empty(shape = 0, dtype = np.int64)
@@ -81,10 +85,12 @@ def create_food(snake, all = all_squares):
         return -1
     return rng.choice(free)
 
+def offset_pos(t, square_size = SQUARE):
+    return np.int64(t) * square_size + square_size / 2
+
 def draw_square(square, color, square_size = SQUARE, w = W):
-    offset = lambda t : np.int64(t) * square_size + square_size / 2
-    x = offset(square % w)
-    y = offset(square / w)
+    x = offset_pos(square % w)
+    y = SCREEN_HEIGHT - offset_pos(square / w)
     arcade.draw_rectangle_filled(x, y, square_size - 10, square_size - 10, color)
 
 def draw_snake(snake, square_size = SQUARE, w = W):
@@ -103,6 +109,7 @@ class MyGame(arcade.Window):
     """
 
     def __init__(self, width, height, title):
+        global path
         super().__init__(width, height, title)
 
         arcade.set_background_color(arcade.color.BLACK)
@@ -111,18 +118,14 @@ class MyGame(arcade.Window):
         self.setup()
         self.set_update_rate(1/FPS)
 
-        a = np.array([1, 2, 3])
-        b = np.array([4, 5, 6])
-        c = a + b
-        print (f'a[{a}], b[{b}], c[{c}]')
-
-        hcg.generate(W, H)
+        path = hcg.generate(W, H)
+        print(f'path: {path}')
 
     def setup(self):
         """ Set up the game variables. Call to re-start the game. """
         global global_snake, food, curr_direction
-        food = 10#create_food(global_snake)
-        global_snake = np.array([11, 1, 0])
+        food = create_food(global_snake)
+        global_snake = np.zeros(1)
         curr_direction = np.zeros(2)
 
     def on_draw(self):
@@ -138,6 +141,10 @@ class MyGame(arcade.Window):
         draw_snake(global_snake)
         draw_square(food, arcade.color.GREEN)
 
+        for i in range(path.size):
+            x = offset_pos(i % W)
+            y = SCREEN_HEIGHT - offset_pos(i / W)
+            arcade.draw_text(path[i], x, y)
 
     def on_update(self, delta_time):
         """
@@ -160,12 +167,6 @@ class MyGame(arcade.Window):
         curr_direction = get_direction(key)
         if curr_direction[X] != 0 or curr_direction[Y] != 0:
             global_snake, food = move(global_snake, curr_direction, food)
-            print(f'curr_direction[{curr_direction}], UP[{Dir.Up.value}]')
-            enum_dir = enum_dirs.get(key)
-            local_dir = 0
-            local_dir = hcg.set_dir(local_dir, Dir.Up)
-            local_dir = hcg.set_dir(local_dir, Dir.Left)
-            print(f'is enum_dir[{enum_dir}] in local_dir[{np.binary_repr(local_dir)}] -> {hcg.is_dir(local_dir, enum_dir)}')
             if (global_snake.size == 0):
                 self.setup()
 
