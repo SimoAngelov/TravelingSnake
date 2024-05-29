@@ -98,25 +98,20 @@ def generate_edges(prev_pos, pos, w, h, edges, visited):
     visited[curr_square] = True
 
     # Remove wall between fromX and fromY
-    prev_square = get_square(prev_pos, w)
-    print(f'\n\nprev_pos[{prev_pos}], pos[{pos}], w[{w}], h[{h}], prev_square[{prev_square}] curr_square[{curr_square}]')
     if prev_pos[Axis.X] != -1:
+        prev_square = get_square(prev_pos, w)
         if prev_pos[Axis.X] < pos[Axis.X]:
             edges[prev_square] = set_dir(edges[prev_square], Dir.Right)
             edges[curr_square] = set_dir(edges[curr_square], Dir.Left)
-            print(f'Right-Left')
         elif prev_pos[Axis.X] > pos[Axis.X]:
             edges[prev_square] = set_dir(edges[prev_square], Dir.Left)
             edges[curr_square] = set_dir(edges[curr_square], Dir.Right)
-            print(f'Left-Right')
         elif prev_pos[Axis.Y] < pos[Axis.Y]:
             edges[prev_square] = set_dir(edges[prev_square], Dir.Down)
             edges[curr_square] = set_dir(edges[curr_square], Dir.Up)
-            print(f'Down-Up')
         elif prev_pos[Axis.Y] > pos[Axis.Y]:
             edges[prev_square] = set_dir(edges[prev_square], Dir.Up)
             edges[curr_square] = set_dir(edges[curr_square], Dir.Down)
-            print(f'Up-Down')
 
 
     # We want to vist the four connected nodes randomly,
@@ -148,31 +143,27 @@ def generate_hamilton_cycle(w, h, edges):
         return is_dir(edges[square], dir)
 
     pos = create_pos()
-    dir = Dir.Down
+    dir = Dir.Up if can_go(Dir.Down, pos) else Dir.Left
     curr_square = 0
     start_offsets = np.array([create_pos(y = 1), create_pos(), create_pos(x = 1), create_pos(1, 1)])
 
     while True:
         next_dir = find_next_dir(pos, dir, can_go)
-        pos_squared = pos ** 2
+        pos_double = pos * 2
 
         # set the current path square
         dir_array = get_dir_array(dir)
         offsets = np.roll(start_offsets, -dir.value, Axis.X)
         offsets_len = len(offsets)
 
-        # print(f'\n\npos[{pos}], pos_squared[{pos_squared}], dir[{dir}], next_dir[{next_dir}], dir_array[{dir_array}], dir.value[{dir.value}]\n\
-        #     start_offsets[{start_offsets}]\n\
-        #     offsets[{offsets}]')
-        set_path_square(hamilton_cycle, curr_square, pos_squared + offsets[0], w)
+        set_path_square(hamilton_cycle, curr_square, pos_double + offsets[0], w)
         curr_square += 1
 
         for i in range(1, offsets_len):
             indices = [j + i - 1 for j in range(offsets_len - i)]
             directions = dir_array[indices]
-            # print(f'i[{i}], indices[{indices}], directions[{directions}]')
             if next_dir in directions:
-                set_path_square(hamilton_cycle, curr_square, pos_squared + offsets[i], w)
+                set_path_square(hamilton_cycle, curr_square, pos_double + offsets[i], w)
                 curr_square += 1
 
         dir = next_dir
