@@ -121,9 +121,8 @@ def generate_edges(prev_pos, pos, w, h, edges, visited):
     directions_array = np.array(Dir)
     rng = np.random.default_rng()
 
-    #for i in range(Axis.COUNT):
-        #dir = rng.choice(directions_array)
-    for dir in [Dir.Down, Dir.Right]: # test
+    for i in range(Axis.COUNT):
+        dir = rng.choice(directions_array)
         next_pos = get_next_pos(pos, dir)
         generate_edges(pos, next_pos, w, h, edges, visited)
 
