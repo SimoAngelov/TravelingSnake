@@ -127,3 +127,14 @@ def get_dir_between(start, end, node_shape):
     elif start_pos[Axis.Y] != end_pos[Axis.Y]:
         dir = Dir.Down if start_pos[Axis.Y] - end_pos[Axis.Y] < 0 else Dir.Up
     return dir
+
+def path_distance(start_node, end_node, shape):
+    '''
+    path_distance - retrieve the path distance between two nodes
+    @param start_node - id of the start node
+    @param end_node - id of the end node
+    @return the distance between the two nodes
+    '''
+    if (start_node < end_node):
+        return end_node - start_node - 1
+    return end_node - start_node - 1 + shape[Axis.X]

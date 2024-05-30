@@ -10,6 +10,67 @@ from nav import Dir, Axis
 
 import snake
 
+def ai_find_next_dir(snake, food, path, shape):
+    shape_size = np.int64(shape[Axis.X] * shape[Axis.Y])
+    snake_size = len(snake)
+    head = snake[0]
+    tail = snake[-1]
+    path_node = path[head]
+    food_dist = nav.path_distance(path_node, food, shape)
+    tail_dist = nav.path_distance(path_node, tail, shape)
+    cutting_amount_available = tail_dist - snake_size - 3 # allow a small buffer
+    empty_nodes = shape_size - snake_size - 1 # account for food
+
+    # If we don't have much space (i.e. snake is 75% of board) then don't take any shortcuts
+    if empty_nodes < shape_size / 2:
+        cutting_amount_available = 0
+    # Snake will eat the food on the way to the tail so take that into account
+    elif food_dist < tail_dist:
+        cutting_amount_available -= snake_size
+        # Once the snake eats the food, it might end up with another food suddenly appearing in front of it
+        # 25% chance of another path square appearing
+        if (tail_dist - food_dist) * 4 > empty_nodes:
+            cutting_amount_available -= 10
+
+    cutting_amount_desired = food_dist
+    if cutting_amount_desired < cutting_amount_available:
+        cutting_amount_available = cutting_amount_desired
+    if cutting_amount_available < 0:
+        cutting_amount_available = 0
+    # cutting_amount_available is now the maximum amout the snake can cut by
+
+    def can_go(dir: Dir):
+        next = nav.get_next_pos(head, dir)
+        if next[Axis.X] < 0 or next[Axis.Y] < 0 or next[Axis.X] >= shape[Axis.X] or next[Axis.Y] > shape[Axis.Y]:
+            return False
+        next_node_id = nav.get_node_id(next, shape)
+        if next_node_id in snake:
+            return False
+        return True
+
+    dir_array = nav.get_dir_array()
+    can_go_arr = np.zeros(len(dir_array), dtype = bool)
+    best_dir = None
+    best_dist = -1
+    for i in range(len(dir_array)):
+        dir = dir_array[i]
+        can_go_arr[i] = can_go(dir)
+        if can_go_arr[i]:
+            next_node = nav.get_next_pos(head, dir)
+            next_node_id = nav.get_node_id(next_node, shape)
+            dist = nav.path_distance(path_node, next_node_id, shape)
+            if (dist <= cutting_amount_available and dist > best_dist):
+                best_dir = dir
+                best_dist = dist
+
+    if best_dist >= 0:
+        return best_dir
+
+    for dir in dir_array:
+        if can_go(dir):
+            return dir
+    return None
+
 class SnakeGame(arcade.Window):
     """
     Main application class.
@@ -28,8 +89,14 @@ class SnakeGame(arcade.Window):
         # and set them to None
         self.setup()
 
-        self.m_path = hcg.generate_path(self.m_node_shape)
-        print(f'path: {self.m_path}')
+        self.m_path = hcg.generate_path(self.m_node_shape, True)
+        row = ""
+        for i in range(len(self.m_path)):
+            row = f'{row}\t{self.m_path[i]}'
+            if np.int64(i % self.m_node_shape[Axis.X]) == (self.m_node_shape[Axis.X] - 1):
+                print(row)
+                row = ""
+        print(f'\n\npath:\n{self.m_path}')
         self.set_path_directions()
 
     def setup(self):
@@ -45,18 +112,18 @@ class SnakeGame(arcade.Window):
         Render the screen.
         """
 
-        dir = self.m_path_directions[self.m_i]
-        self.m_i = np.int64((self.m_i + 1) % len(self.m_path_directions))
-        if dir is not None:
-            self.m_dir_vector = nav.get_next_pos(nav.create_pos(), dir)
-        else:
-            self.m_dir_vector = nav.create_pos()
+        # dir = self.m_path_directions[self.m_i]
+        # self.m_i = np.int64((self.m_i + 1) % len(self.m_path_directions))
+        # if dir is not None:
+        #     self.m_dir_vector = nav.get_next_pos(nav.create_pos(), dir)
+        # else:
+        #     self.m_dir_vector = nav.create_pos()
 
-        if self.m_dir_vector[Axis.X] != 0 or self.m_dir_vector[Axis.Y] != 0:
-            self.m_snake, self.m_food = snake.move(self.m_snake, self.m_dir_vector,
-                                                    self.m_food, self.m_all_nodes, self.m_node_shape)
-            if (self.m_snake.size == 0 or self.m_food == -1):
-                self.setup()
+        # if self.m_dir_vector[Axis.X] != 0 or self.m_dir_vector[Axis.Y] != 0:
+        #     self.m_snake, self.m_food = snake.move(self.m_snake, self.m_dir_vector,
+        #                                             self.m_food, self.m_all_nodes, self.m_node_shape)
+        #     if (self.m_snake.size == 0 or self.m_food == -1):
+        #         self.setup()
 
         # This command should happen before we start drawing. It will clear
         # the screen to the background color, and erase what we drew last frame.
@@ -79,6 +146,18 @@ class SnakeGame(arcade.Window):
         Normally, you'll call update() on the sprite lists that
         need it.
         """
+        dir = ai_find_next_dir(self.m_snake, self.m_food, self.m_path, self.m_node_shape)
+        if dir is not None:
+            self.m_dir_vector = nav.get_next_pos(nav.create_pos(), dir)
+        else:
+            self.m_dir_vector = nav.create_pos()
+
+        if self.m_dir_vector[Axis.X] != 0 or self.m_dir_vector[Axis.Y] != 0:
+            print(f'self.m_node_shape[{self.m_node_shape}], self.m_dir_vector[{self.m_dir_vector}], self.m_snake[{self.m_snake}]')
+            self.m_snake, self.m_food = snake.move(self.m_snake, self.m_dir_vector,
+                                                    self.m_food, self.m_all_nodes, self.m_node_shape)
+            if (self.m_snake.size == 0 or self.m_food == -1):
+                self.setup()
 
 
     def on_key_press(self, key, key_modifiers):
@@ -178,4 +257,4 @@ class SnakeGame(arcade.Window):
 
     m_path_directions = []
 
-    m_i = 0
+    m_i = 0;
