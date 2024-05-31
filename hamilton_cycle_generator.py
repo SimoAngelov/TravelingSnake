@@ -2,7 +2,7 @@ import numpy as np
 import nav
 from nav import Dir, Axis
 
-def generate_path(shape, is_test = False):
+def generate_path(shape, is_print_edges = False):
     '''
     generate_path - generate hamiltonian path
     @param shape - node shape WxH
@@ -11,20 +11,17 @@ def generate_path(shape, is_test = False):
     half_shape = nav.create_pos(shape[Axis.X] / 2, shape[Axis.Y] / 2)
     edges = np.zeros(half_shape[Axis.X] * half_shape[Axis.Y], dtype=np.int8)
     visited = np.zeros(len(edges), dtype=bool)
-    if is_test:
-        edges = np.array([4, 4, 3, 9], dtype=np.int8)
-    else:
-        edges = generate_edges(nav.create_pos(-1, -1), nav.create_pos(),
-                                half_shape, edges, visited)
-    print(f'generate(shape: {shape}), edges: {edges}')
+    edges = generate_edges(nav.create_pos(-1, -1), nav.create_pos(),
+                            half_shape, edges, visited)
 
-    dirs = nav.get_dir_array()
-    for i in range(edges.size):
-        res = ''
-        for dir in dirs:
-            if nav.is_dir(edges[i], dir):
-                res = f'{res}, {dir}'
-        print(f'edge[{i}]: {res}')
+    if is_print_edges:
+        dirs = nav.get_dir_array()
+        for i in range(edges.size):
+            res = ''
+            for dir in dirs:
+                if nav.is_dir(edges[i], dir):
+                    res = f'{res}, {dir}'
+            print(f'edge[{i}]: {res}')
     return generate_hamilton_cycle(edges, shape)
 
 def generate_edges(prev_pos, pos, shape, edges, visited):

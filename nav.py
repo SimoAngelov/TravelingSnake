@@ -32,6 +32,8 @@ def get_next_pos(pos, dir: Dir):
     @param dir - direction of the next position
     @return the next position in that direction
     '''
+    if not isinstance(pos, np.ndarray):
+        raise TypeError("pos is not array type")
     if not isinstance(dir, Dir):
         raise TypeError("dir is not type Dir")
     offsets = {
@@ -95,8 +97,8 @@ def get_node_pos(id, shape):
     @param shape - node shape WxH
     @return a tuple of x, y node position in the shape grid
     '''
-    x = np.int64(id / shape[Axis.X])
-    y = np.int64(id % shape[Axis.X])
+    x = np.int64(id % shape[Axis.X])
+    y = np.int64(id / shape[Axis.X])
     return create_pos(x, y)
 
 def get_node_id(pos, shape):
@@ -108,6 +110,19 @@ def get_node_id(pos, shape):
     '''
     node_id = np.int64(pos[Axis.X] + pos[Axis.Y] * shape[Axis.X])
     return node_id
+
+def get_next_node_id(node_id, dir, shape):
+    '''
+    get_next_node_id - retrieve the next node id from the current one
+    @param node_id - current node id
+    @param dir - direction in which to move from node_id
+    @param shape - node shape WxH
+    @return the next node id in the direction of the current one
+    '''
+    curr_pos = get_node_pos(node_id, shape)
+    next_pos = get_next_pos(curr_pos, dir)
+    next_node_id = get_node_id(next_pos, shape)
+    return next_node_id
 
 def get_dir_between(start, end, node_shape):
     '''
@@ -137,4 +152,13 @@ def path_distance(start_node, end_node, shape):
     '''
     if (start_node < end_node):
         return end_node - start_node - 1
-    return end_node - start_node - 1 + shape[Axis.X]
+    return end_node - start_node - 1 + shape[Axis.X] * shape[Axis.Y]
+
+def is_out_of_bounds(pos, shape):
+    '''
+    is_out_of_bounds - query whether the position is out of the bounds of shape
+    @param pos - x, y position to be queried.
+    @param shape - node shape WxH
+    @return true, if the position is out of the bounds of shape
+    '''
+    return pos[Axis.X] < 0 or pos[Axis.Y] < 0 or pos[Axis.X] >= shape[Axis.X] or pos[Axis.Y] >= shape[Axis.Y]

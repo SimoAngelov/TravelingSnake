@@ -19,7 +19,7 @@ def move(snake, dir, food, all_nodes, node_shape):
     @param all_nodes - all node ids
     @param node_shape - node shape WxH
     '''
-    new_head = snake[0] + nav.get_node_id(dir, node_shape)
+    new_head = nav.get_next_node_id(snake[0], dir, node_shape)
 
     if (new_head == food):
         snake = np.append([food], snake)

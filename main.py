@@ -7,8 +7,8 @@ import numpy as np
 SCREEN_TITLE = "Traveling Snake"
 
 NODE_SIZE = 20
-NODE_SHAPE = [4, 4]
-FPS = 20
+NODE_SHAPE = [6, 6]
+FPS = 60
 
 def main():
     """ Main function """
