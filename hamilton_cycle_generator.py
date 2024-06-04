@@ -1,15 +1,15 @@
 import numpy as np
 import nav
-from nav import Dir, Axis
+from nav import Dir, Axis, Dmn
 
 def generate_path(shape, is_print_edges = False):
     '''
     generate_path - generate hamiltonian path
-    @param shape - node shape WxH
+    @param shape - node shape HxW
     @return an array which is the hamiltonian path. The values are node ids
     '''
-    half_shape = nav.create_pos(shape[Axis.X] / 2, shape[Axis.Y] / 2)
-    edges = np.zeros(half_shape[Axis.X] * half_shape[Axis.Y], dtype=np.int8)
+    half_shape = nav.create_pos(shape[Dmn.H] / 2, shape[Dmn.W] / 2)
+    edges = np.zeros(half_shape[Dmn.W] * half_shape[Dmn.H], dtype=np.int8)
     visited = np.zeros(len(edges), dtype=bool)
     edges = generate_edges(nav.create_pos(-1, -1), nav.create_pos(),
                             half_shape, edges, visited)
@@ -29,11 +29,11 @@ def generate_edges(prev_pos, pos, shape, edges, visited):
     generate_edges - recursively defined method to generate node edges
     @param prev_pos - previous position from which to connect an edge
     @param pos - current position to which to connect an edge
-    @param shape - node shape WxH
+    @param shape - node shape HxW
     @param edges - output parameter. Edges to be set at the specified positions
     @param visited - output parameter. Keep trach of which node was visited
     '''
-    if pos[Axis.X] < 0 or pos[Axis.Y] < 0 or pos[Axis.X] >= shape[Axis.X] or pos[Axis.Y] >= shape[Axis.Y]:
+    if pos[Axis.X] < 0 or pos[Axis.Y] < 0 or pos[Axis.X] >= shape[Dmn.W] or pos[Axis.Y] >= shape[Dmn.H]:
         return
 
     curr_node_id = nav.get_node_id(pos, shape)
@@ -81,10 +81,10 @@ def generate_hamilton_cycle(edges, shape):
     '''
     generate_hamilton_cycle - generate a hamiltonian cycle from the specified edges
     @param edges - valid edges between nodes
-    @param shape - node shape WxH
+    @param shape - node shape HxW
     @return an array which is the hamiltonian cycle from the specified edges. The values are edges
     '''
-    hamilton_cycle = np.zeros(np.int64(shape[Axis.X] * shape[Axis.Y]), dtype=np.int64)
+    hamilton_cycle = np.zeros(np.int64(shape[Dmn.W] * shape[Dmn.H]), dtype=np.int64)
     def can_go(dir, pos):
         node_id = nav.get_node_id(pos, shape / 2)
         if node_id >= edges.size:
@@ -151,7 +151,7 @@ def set_path_square(path, path_square, pos, shape):
     @param path - output parameter. Path for which to set the square
     @param path_square - square to be set
     @param pos - node position at which to set the square
-    @param shape - node shape WxH
+    @param shape - node shape HxW
     '''
     node_id = nav.get_node_id(pos, shape)
     if (path[node_id] == 0):

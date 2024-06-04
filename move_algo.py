@@ -2,7 +2,7 @@ import numpy as np
 from enum import IntEnum
 
 import nav
-from nav import Axis, Dir
+from nav import Axis, Dmn, Dir
 
 class Algo(IntEnum):
     FOLLOW_PATH = 0
@@ -34,10 +34,10 @@ def fint_next_shortcut_dir(snake, food, path, shape):
     @param snake - snake array
     @param food - food node id
     @param path - hamilton path the snake should follow
-    @param shape - node shape WxH
+    @param shape - node shape HxW
     @return the next direction the snake should take
     '''
-    shape_size = np.int64(shape[Axis.X] * shape[Axis.Y])
+    shape_size = np.int64(shape[Dmn.W] * shape[Dmn.H])
     snake_size = len(snake)
     head_pos = nav.get_node_pos(snake[0], shape)
     tail = snake[-1]
@@ -103,7 +103,7 @@ def create_path_directions(path, shape):
     '''
     create_path_directions - create an array of directions the snake should follow
     @param path - path the snake should follow
-    @param shape - node shape WxH
+    @param shape - node shape HxW
     @return an array of path directions the snake should follow
     '''
     path_directions = np.zeros(shape = len(path), dtype=Dir)

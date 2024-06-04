@@ -11,7 +11,15 @@ class Axis(IntEnum):
     ''' Y Axis '''
 
     COUNT = 2
-    ''' number of axis '''
+    ''' number of axes '''
+
+class Dmn(IntEnum):
+    ''' Enumerate dimensions '''
+    H = 0
+    ''' height '''
+
+    W = 1
+    ''' width '''
 
 class Dir(Enum):
     '''  Enumerate directions '''
@@ -97,8 +105,8 @@ def get_node_pos(id, shape):
     @param shape - node shape WxH
     @return a tuple of x, y node position in the shape grid
     '''
-    x = np.int64(id % shape[Axis.X])
-    y = np.int64(id / shape[Axis.X])
+    x = np.int64(id % shape[Dmn.W])
+    y = np.int64(id / shape[Dmn.W])
     return create_pos(x, y)
 
 def get_node_id(pos, shape):
@@ -108,7 +116,7 @@ def get_node_id(pos, shape):
     @param shape - node shape WxH
     @return the id of the node at the specified position
     '''
-    node_id = np.int64(pos[Axis.X] + pos[Axis.Y] * shape[Axis.X])
+    node_id = np.int64(pos[Axis.X] + pos[Axis.Y] * shape[Dmn.W])
     return node_id
 
 def get_next_node_id(node_id, dir, shape):
@@ -152,7 +160,7 @@ def path_distance(start_node, end_node, shape):
     '''
     if (start_node < end_node):
         return end_node - start_node - 1
-    return end_node - start_node - 1 + shape[Axis.X] * shape[Axis.Y]
+    return end_node - start_node - 1 + shape[Dmn.W] * shape[Dmn.H]
 
 def is_out_of_bounds(pos, shape):
     '''
@@ -161,4 +169,4 @@ def is_out_of_bounds(pos, shape):
     @param shape - node shape WxH
     @return true, if the position is out of the bounds of shape
     '''
-    return pos[Axis.X] < 0 or pos[Axis.Y] < 0 or pos[Axis.X] >= shape[Axis.X] or pos[Axis.Y] >= shape[Axis.Y]
+    return pos[Axis.X] < 0 or pos[Axis.Y] < 0 or pos[Axis.X] >= shape[Dmn.W] or pos[Axis.Y] >= shape[Dmn.H]

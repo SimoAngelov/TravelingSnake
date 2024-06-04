@@ -5,10 +5,9 @@ import numpy as np
 from enum import IntEnum
 
 import hamilton_cycle_generator as hcg
-from hamilton_cycle_generator import Dir
 
 import nav
-from nav import Dir, Axis
+from nav import Dir, Axis, Dmn
 
 import snake
 
@@ -21,11 +20,11 @@ class SnakeGame(arcade.Window):
     """
 
     def __init__(self, title, fps, node_shape, node_size):
-        self.m_node_shape = nav.create_pos(node_shape[Axis.X], node_shape[Axis.Y])
+        self.m_node_shape = nav.create_pos(node_shape[Dmn.H], node_shape[Dmn.W])
         self.m_node_size = node_size
 
-        screen_width = np.int64(self.m_node_shape[Axis.X] * self.m_node_size)
-        screen_height = np.int64(self.m_node_shape[Axis.Y] * self.m_node_size)
+        screen_width = np.int64(self.m_node_shape[Dmn.W] * self.m_node_size)
+        screen_height = np.int64(self.m_node_shape[Dmn.H] * self.m_node_size)
         super().__init__(screen_width, screen_height, title, update_rate=1/fps)
 
         arcade.set_background_color(arcade.color.BLACK)
@@ -36,7 +35,7 @@ class SnakeGame(arcade.Window):
         row = ""
         for i in range(len(self.m_path)):
             row = f'{row}\t{self.m_path[i]}'
-            if np.int64(i % self.m_node_shape[Axis.X]) == (self.m_node_shape[Axis.X] - 1):
+            if np.int64(i % self.m_node_shape[Dmn.W]) == (self.m_node_shape[Dmn.W] - 1):
                 print(row)
                 row = ""
         print(f'\n\npath:\n{self.m_path}')
@@ -44,8 +43,8 @@ class SnakeGame(arcade.Window):
 
     def setup(self):
         """ Set up the game variables. Call to re-start the game. """
-        self.m_all_nodes = np.arange(self.m_node_shape[Axis.X] * self.m_node_shape[Axis.Y])
-        self.m_snake = np.random.randint(self.m_node_shape[Axis.X] * self.m_node_shape[Axis.Y], size = 1)
+        self.m_all_nodes = np.arange(self.m_node_shape[Dmn.W] * self.m_node_shape[Dmn.H])
+        self.m_snake = np.random.randint(self.m_node_shape[Dmn.W] * self.m_node_shape[Dmn.H], size = 1)
         self.m_food = snake.create_food(self.m_snake, self.m_all_nodes)
         move_algo.set_path_dir_index(self.m_snake[0], self.m_path)
 
@@ -60,14 +59,14 @@ class SnakeGame(arcade.Window):
         self.clear()
 
         # Call draw() on all your sprite lists below
-        self.draw_snake(self.m_snake, self.m_node_size, self.m_node_shape[Axis.X])
-        self.draw_square(self.m_food, arcade.color.GREEN, self.m_node_size, self.m_node_shape[Axis.X])
+        self.draw_snake(self.m_snake, self.m_node_size, self.m_node_shape[Dmn.W])
+        self.draw_square(self.m_food, arcade.color.GREEN, self.m_node_size, self.m_node_shape[Dmn.W])
 
         show_path = False
         if show_path:
             for i in range(self.m_path.size):
-                x = snake.offset_pos(i % self.m_node_shape[Axis.X], self.m_node_size)
-                y = self.height - snake.offset_pos(i / self.m_node_shape[Axis.X], self.m_node_size)
+                x = snake.offset_pos(i % self.m_node_shape[Dmn.W], self.m_node_size)
+                y = self.height - snake.offset_pos(i / self.m_node_shape[Dmn.W], self.m_node_size)
                 arcade.draw_text(self.m_path[i], x, y)
 
     def on_update(self, delta_time):
@@ -107,7 +106,7 @@ class SnakeGame(arcade.Window):
 
     m_node_shape = nav.create_pos()
     '''
-    m_node_shape - shape of nodes WxH
+    m_node_shape - shape of nodes HxW
     '''
 
     m_node_size = 0
