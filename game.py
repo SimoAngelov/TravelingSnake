@@ -1,6 +1,5 @@
 
 import arcade
-import arcade.key
 import numpy as np
 from enum import IntEnum
 
@@ -42,7 +41,7 @@ class SnakeGame(arcade.Window):
 
         screen_width = np.int64(self.m_node_shape[Dmn.W] * self.m_node_size)
         screen_height = np.int64(self.m_node_shape[Dmn.H] * self.m_node_size)
-        super().__init__(screen_width, screen_height, title, update_rate=1/fps)
+        super().__init__(screen_width, screen_height, title, update_rate=1/fps, vsync=True)
 
         arcade.set_background_color(arcade.color.BLACK)
         # If you have sprite lists, you should create them here,
@@ -84,7 +83,8 @@ class SnakeGame(arcade.Window):
             for i in range(self.m_path.size):
                 x = snake.offset_pos(i % self.m_node_shape[Dmn.W], self.m_node_size)
                 y = self.height - snake.offset_pos(i / self.m_node_shape[Dmn.W], self.m_node_size)
-                arcade.draw_text(self.m_path[i], x, y)
+                width = self.m_node_size
+                arcade.draw_text(self.m_path[i], x - width / 2, y, font_size = 10, align="center", width=width)
 
     def on_update(self, delta_time):
         """
@@ -92,23 +92,14 @@ class SnakeGame(arcade.Window):
         Normally, you'll call update() on the sprite lists that
         need it.
         """
-        dir = None
         algo = Algo.TAKE_SHORTCUTS
-        if (algo is Algo.FOLLOW_PATH):
-            dir = move_algo.find_next_dir(self.m_path, self.m_node_shape)
-        elif algo is Algo.TAKE_SHORTCUTS:
-            dir = move_algo.fint_next_shortcut_dir(self.m_snake, self.m_food, self.m_path, self.m_node_shape)
-
-        if dir is not None:
-            self.m_snake, self.m_food = snake.move(self.m_snake, dir,
-                                                    self.m_food, self.m_all_nodes, self.m_node_shape)
-            if (self.m_snake.size == 0 or self.m_food == -1):
-                self.setup()
+        self.algo_step(algo)
 
 
     def on_key_press(self, key, key_modifiers):
-        pass
-
+        if key == arcade.key.N:
+            self.algo_step(Algo.NONE)
+            print(f'\n\n')
 
     def draw_square(self, square, color, square_size, w):
         '''
@@ -151,6 +142,20 @@ class SnakeGame(arcade.Window):
             j = snake.size - 1 - i
             color = arcade.color.AIR_SUPERIORITY_BLUE if j > 0 else arcade.color.RADICAL_RED
             self.draw_square(snake[j], color, square_size, w)
+
+    def algo_step(self, algo):
+        dir = None
+
+        if (algo is Algo.FOLLOW_PATH):
+            dir = move_algo.find_next_dir(self.m_path, self.m_node_shape)
+        elif algo is Algo.TAKE_SHORTCUTS:
+            dir = move_algo.fint_next_shortcut_dir(self.m_snake, self.m_food, self.m_path, self.m_node_shape)
+
+        if dir is not None:
+            self.m_snake, self.m_food = snake.move(self.m_snake, dir,
+                                                    self.m_food, self.m_all_nodes, self.m_node_shape)
+            if (self.m_snake.size == 0 or self.m_food == -1):
+                self.setup()
 
     m_node_shape = nav.create_pos()
     '''

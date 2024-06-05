@@ -77,14 +77,14 @@ def fint_next_shortcut_dir(snake, food, path, shape):
     food_dist = nav.path_distance(path_node, path[food], shape)
     tail_dist = nav.path_distance(path_node, path[tail], shape)
     cutting_amount_available = tail_dist - snake_size - 3 # allow a small buffer
-    empty_nodes = shape_size - snake_size - 1 # account for food
+    empty_nodes = shape_size - snake_size # account for food
 
     # If we don't have much space (i.e. snake is 75% of board) then don't take any shortcuts
     if empty_nodes < shape_size / 2:
         cutting_amount_available = 0
     # Snake will eat the food on the way to the tail so take that into account
     elif food_dist < tail_dist:
-        cutting_amount_available -= snake_size
+        cutting_amount_available -= 1
         # Once the snake eats the food, it might end up with another food suddenly appearing in front of it
         # 25% chance of another path square appearing
         if (tail_dist - food_dist) * 4 > empty_nodes:
