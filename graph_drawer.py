@@ -87,12 +87,18 @@ def graph_example(title, is_directed = False, is_weighted = False, node_count = 
     plt.title(title)
     plt.show()
 
-def draw_grid_graph(title, m, n, node_color = "blue", node_size = 600):
+def draw_grid_graph(title, m, n, edges_to_remove = [], node_color = "blue", node_size = 600):
     '''
     draw_grid_graph - draw a grid graph
-    @param title - title of the graph
-    @param m - number of rows
+
+    Parameters
+    ----------
+    title : string
+            title of the graph
+    m : integer
+      number of rows
     @param n - number of colums
+    @param edges_to_remove - list of edges to be removed
     @param node_color - color of the node
     @param node_size - size of the node in pixels
     '''
@@ -100,6 +106,9 @@ def draw_grid_graph(title, m, n, node_color = "blue", node_size = 600):
 
     plt.figure(figsize=(6,6))
     pos = {(x,y):(y,-x) for x,y in G.nodes()}
+    if len(edges_to_remove) != 0:
+        G.remove_edges_from(edges_to_remove)
+
     nx.draw(G, pos=pos,
             node_color=node_color,
             node_size=600)
@@ -148,4 +157,19 @@ def draw_ores_theorem():
     draw_graph_edges(G, edges, pos, is_directed = False, is_weighted = False)
     plt.title(f'Ore\'s Theorem\nVertices: {len(nodes)}')
     plt.show()
-draw_ores_theorem()
+
+def draw_hamilton_example():
+    edges_to_remove = []
+    m = 5
+    n = 6
+    for i in range(1, n - 1):
+        edges_to_remove.append([(0, i), (1, i)])
+    for j in range(1, m):
+        for i in range(n - 1):
+            if (j == 1 and i % 2 != 0) or (j == m - 1 and i % 2 == 0):
+                pass
+            else:
+                edges_to_remove.append([(j, i), (j, i + 1)])
+    draw_grid_graph("Hamiltonian Path with one even dimension", m, n, edges_to_remove, node_size = 300)
+
+draw_hamilton_example()
