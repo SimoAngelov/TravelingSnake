@@ -20,6 +20,23 @@ class SnakeGame(arcade.Window):
     """
 
     def __init__(self, title, fps, node_shape, node_size):
+        '''
+        initialize the SnakeGame class
+
+        Parameters
+        ----------
+        title : string
+            The title of the game window
+
+        fps - integer
+            frames per second of the application
+
+        node_shape : list
+            node shape HxW
+
+        node_size : integer
+            size of the node in pixels
+        '''
         self.m_node_shape = nav.create_pos(node_shape[Dmn.H], node_shape[Dmn.W])
         self.m_node_size = node_size
 
@@ -94,11 +111,42 @@ class SnakeGame(arcade.Window):
 
 
     def draw_square(self, square, color, square_size, w):
+        '''
+        draw a square on the screen
+
+        Parameters
+        ----------
+        square - node id of the square to be draw.
+
+        color : string
+            color of the square
+
+        square_size : integer
+            the size of the square in pixels
+
+        w : integer
+            number of squares in the width dimension
+        '''
         x = snake.offset_pos(square % w, square_size)
         y = self.height - snake.offset_pos(square / w, square_size)
         arcade.draw_rectangle_filled(x, y, square_size, square_size, color)
 
     def draw_snake(self, snake, square_size, w):
+        '''
+        draw a snake on the screen
+
+        Parameters
+        ----------
+        snake : array
+            array of node ids occupied by the snake
+
+        square_size : integer
+            the size of a square in pixels
+
+        w : integer
+            number of squares in the width dimension
+        '''
+
         for i in range(snake.size):
             j = snake.size - 1 - i
             color = arcade.color.AIR_SUPERIORITY_BLUE if j > 0 else arcade.color.RADICAL_RED

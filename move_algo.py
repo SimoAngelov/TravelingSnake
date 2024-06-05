@@ -20,6 +20,23 @@ dir_index - current index in the directions array for Algo.FOLLOW_PATH
 '''
 
 def find_next_dir(path, shape):
+    '''
+    generator function, used to find the next direction in the path
+
+    Parameters
+    ----------
+    path : array
+        Hamiltonian path, used to construct the array of directions the
+        snake should follow
+
+    shape : array
+        node shape HxW
+
+    Returns
+    -------
+    Dir
+        the next direction in the path the snake should go
+    '''
     if directions is None:
         directions = create_path_directions(path, shape)
     while True:
@@ -31,11 +48,26 @@ def fint_next_shortcut_dir(snake, food, path, shape):
     '''
     find_next_shortcut_dir - find the next direction the snake should take
     so it reaches the food
-    @param snake - snake array
-    @param food - food node id
-    @param path - hamilton path the snake should follow
-    @param shape - node shape HxW
-    @return the next direction the snake should take
+
+    Parameters
+    ----------
+    snake : array
+        contains all node ids occupied by the snake
+
+    food : integer
+        food node id
+
+    path : array
+        hamilton path the snake should follow
+
+    shape : array
+        node shape HxW
+
+    Returns
+    -------
+    integer
+        the next direction the snake should take.
+        If no direction was found, None is returned
     '''
     shape_size = np.int64(shape[Dmn.W] * shape[Dmn.H])
     snake_size = len(snake)
@@ -101,10 +133,19 @@ def fint_next_shortcut_dir(snake, food, path, shape):
 # Utility functions
 def create_path_directions(path, shape):
     '''
-    create_path_directions - create an array of directions the snake should follow
-    @param path - path the snake should follow
-    @param shape - node shape HxW
-    @return an array of path directions the snake should follow
+    create an array of directions the snake should follow
+
+    Parameters
+    ----------
+    path : array
+        Hamiltonian path the snake should follow
+    shape : array
+        node shape HxW
+
+    Returns
+    -------
+    path_directions : array
+        an array of path directions the snake should follow
     '''
     path_directions = np.zeros(shape = len(path), dtype=Dir)
     def get_node_id(val):
@@ -124,9 +165,14 @@ def create_path_directions(path, shape):
 
 def set_path_dir_index(snake_head, path):
     '''
-    set_path_dir_index - set the path direction index based on the
-    head of the snake
-    @param snake_head - snake head node id
-    @param path - path the snake should follow
+    set the path direction index based on the head of the snake
+
+    Parameters
+    ----------
+    snake_head : integer
+        snake head node id
+
+    path : array
+        Hamiltonian path the snake should follow
     '''
     dir_index = path[snake_head]

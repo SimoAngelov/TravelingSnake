@@ -7,8 +7,19 @@ from itertools import combinations
 def create_graph_edges(nodes, is_weighted):
     '''
     create_graph_edges - create edges for a graph with the given nodes
-    @param nodes - nodes for which to create the edges
-    @param is_weighted - do the edges have values(True) or not(False)
+
+    Parameters
+    ----------
+    nodes : list
+        nodes for which to create the edges
+
+    is_weighted : bool
+        do the edges have values(True) or not(False)
+
+    Returns
+    -------
+    edges : list
+        a list of edges
     '''
     node_count = len(nodes)
     # determine how many edges will emerge from each node
@@ -24,15 +35,33 @@ def create_graph_edges(nodes, is_weighted):
 def draw_graph_edges(G, edges, pos, is_directed, is_weighted,
                      width = 3, arrowstyle = "->", arrowsize = 20):
     '''
-    draw_graph_edges - draw the edges of the specified graph
-    @param G - graph for which to draw the edges
-    @param edges - edges to be drawn
-    @param pos - (x, y) positions of the edges
-    @param is_directed - are the edges directed(True) or not(False)
-    @param is_weighted - do the edges have values(True) or not(False)
-    @param width - width of the edge in pixels
-    @param arrowstyle - style of the arrow, if the graph is directed
-    @param arrowsize - size of the arrow, if the graph is directed
+    draw the edges of the specified graph
+
+    Parameters
+    ----------
+    G : graph
+        graph for which to draw the edges
+
+    edges : list
+        edges to be drawn
+
+    pos : list
+        (x, y) positions of the edges
+
+    is_directed : bool,
+        are the edges directed(True) or not(False)
+
+    is_weighted : bool
+        do the edges have values(True) or not(False)
+
+    width : integer, optional
+        width of the edge in pixels, by default 3
+
+    arrowstyle : string, optional
+        style of the arrow, if the graph is directed, by default "->"
+
+    arrowsize : integer, optional
+        size of the arrow, if the graph is directed, by default 20
     '''
     def draw_edges(edge_list, alpha = None, edge_color="k", style="solid"):
         if is_directed:
@@ -56,13 +85,28 @@ def draw_graph_edges(G, edges, pos, is_directed, is_weighted,
 
 def graph_example(title, is_directed = False, is_weighted = False, node_count = 6, dpi = 240, seed = 6):
     '''
-    graph_example - render a graph example
-    @param title - title of the example graph
-    @param is_directed - is the graph directed(True) or undirected(False)
-    @param is_weighted - is the graph weighted(True) or unweighed(False)
-    @param node_count - numer of nodes for the example graph
-    @param dpi - dots per inch
-    @param seed - position seed for reproducibility
+    render a graph example
+
+    Parameters
+    ----------
+
+    title : string
+        title of the example graph
+
+    is_directed : bool, optional
+        is the graph directed(True) or undirected(False), by default False
+
+    is_weighted : bool, optional
+        is the graph weighted(True) or unweighed(False), by default False
+
+    node_count : integer, optional
+        number of nodes for the example graph, by default 6
+
+    dpi : integer, optional
+        dots per inch, by default 240
+
+    seed : integer, optional
+        position seed for reproducibility, by default 6
     '''
     G = nx.DiGraph() if is_directed else nx.Graph()
     G.graph['dpi'] = dpi
@@ -89,18 +133,27 @@ def graph_example(title, is_directed = False, is_weighted = False, node_count = 
 
 def draw_grid_graph(title, m, n, edges_to_remove = [], node_color = "blue", node_size = 600):
     '''
-    draw_grid_graph - draw a grid graph
+    draw a grid graph with the specified size
 
     Parameters
     ----------
     title : string
-            title of the graph
+        title of the graph
+
     m : integer
-      number of rows
-    @param n - number of colums
-    @param edges_to_remove - list of edges to be removed
-    @param node_color - color of the node
-    @param node_size - size of the node in pixels
+        number of rows
+
+    n : integer
+        number of colums
+
+    edges_to_remove : list
+        list of edges to be removed
+
+    node_color : string, optional
+        color of the node, by default "blue"
+
+    node_size : integer, optional
+        size of the node in pixels, by default 600
     '''
     G = nx.grid_2d_graph(m, n)
 
@@ -118,7 +171,7 @@ def draw_grid_graph(title, m, n, edges_to_remove = [], node_color = "blue", node
 
 def draw_diracs_theorem():
     '''
-    draw_diracs_theorem - draw an example of dirac's theorem
+    draw an example of Dirac's theorem
     '''
     G = nx.Graph()
     nodes = np.arange(6)
@@ -139,7 +192,7 @@ def draw_diracs_theorem():
 
 def draw_ores_theorem():
     '''
-    draw_diracs_theorem - draw an example of ore's theorem
+    draw an example of Ore's theorem
     '''
     G = nx.Graph()
     nodes = np.arange(5)
@@ -159,6 +212,9 @@ def draw_ores_theorem():
     plt.show()
 
 def draw_hamilton_example():
+    '''
+    draw a hamilton example
+    '''
     edges_to_remove = []
     m = 5
     n = 6
@@ -170,6 +226,4 @@ def draw_hamilton_example():
                 pass
             else:
                 edges_to_remove.append([(j, i), (j, i + 1)])
-    draw_grid_graph("Hamiltonian Path with one even dimension", m, n, edges_to_remove, node_size = 300)
-
-draw_hamilton_example()
+    draw_grid_graph("Hamiltonian Cycle with one even dimension", m, n, edges_to_remove, node_size = 300)

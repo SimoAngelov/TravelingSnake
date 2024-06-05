@@ -4,9 +4,20 @@ from nav import Dir, Axis, Dmn
 
 def generate_path(shape, is_print_edges = False):
     '''
-    generate_path - generate hamiltonian path
-    @param shape - node shape HxW
-    @return an array which is the hamiltonian path. The values are node ids
+    generate hamiltonian path
+
+    Parameters
+    ----------
+    shape : array
+        node shape HxW
+
+    is_print_edges : bool, optional
+        whether to print the edges from Prim's MST algorithm, by default is False
+
+    Returns
+    -------
+    array
+        an array which is the hamiltonian path. The values are node ids
     '''
     half_shape = nav.create_pos(shape[Dmn.H] / 2, shape[Dmn.W] / 2)
     edges = np.zeros(half_shape[Dmn.W] * half_shape[Dmn.H], dtype=np.int8)
@@ -26,12 +37,24 @@ def generate_path(shape, is_print_edges = False):
 
 def generate_edges(prev_pos, pos, shape, edges, visited):
     '''
-    generate_edges - recursively defined method to generate node edges
-    @param prev_pos - previous position from which to connect an edge
-    @param pos - current position to which to connect an edge
-    @param shape - node shape HxW
-    @param edges - output parameter. Edges to be set at the specified positions
-    @param visited - output parameter. Keep trach of which node was visited
+    recursively defined method to generate node edges, using Prim's algorithm
+
+    Parameters
+    ----------
+    prev_pos : array
+        previous position from which to connect an edge
+
+    pos : array
+        current position to which to connect an edge
+
+    shape : array
+        node shape HxW
+
+    edges : array, output parameter
+        edges to be set at the specified positions
+
+    visited : array, output parameter
+        keep trach of which node was visited
     '''
     if pos[Axis.X] < 0 or pos[Axis.Y] < 0 or pos[Axis.X] >= shape[Dmn.W] or pos[Axis.Y] >= shape[Dmn.H]:
         return
@@ -79,13 +102,39 @@ def generate_edges(prev_pos, pos, shape, edges, visited):
 
 def generate_hamilton_cycle(edges, shape):
     '''
-    generate_hamilton_cycle - generate a hamiltonian cycle from the specified edges
-    @param edges - valid edges between nodes
-    @param shape - node shape HxW
-    @return an array which is the hamiltonian cycle from the specified edges. The values are edges
+    generate a hamiltonian cycle from the specified edges
+
+    Parameters
+    ----------
+    edges : array
+        valid edges between nodes
+
+    shape : array
+        node shape HxW
+
+    Returns
+    -------
+    array
+        array which is the hamiltonian cycle from the specified edges. The values are edges
     '''
     hamilton_cycle = np.zeros(np.int64(shape[Dmn.W] * shape[Dmn.H]), dtype=np.int64)
     def can_go(dir, pos):
+        '''
+        query whether we can move from the current position in the desired direction
+
+        Parameters
+        ----------
+        dir : Dir
+            direction in which we want to go
+
+        pos : array
+            current x, y position
+
+        Returns
+        -------
+        bool
+            True, if we can go from the current position in the desired direction
+        '''
         node_id = nav.get_node_id(pos, shape / 2)
         if node_id >= edges.size:
             return False
@@ -125,14 +174,23 @@ def generate_hamilton_cycle(edges, shape):
 
 def find_next_dir(pos, dir: Dir, can_go):
     '''
-    find_next_dir - find the next direction we can
-    go from the current position
-    @param pos - current position
-    @param dir - direction we're currently facing
-    @param can_go - predicate to determine, if we can
-    go in a certain position
-    @return the next direction we should go from the
-    current position
+    find the next direction we can go from the current position
+
+    Parameters
+    ----------
+    pos : array
+        current position
+
+    dir : Dir
+        direction we're currently facing
+
+    can_go : function
+        predicate to determine, if we can go in a certain direction
+
+    Returns
+    -------
+    Dir
+        the next direction we should go from the current position
     '''
     # start the array by rolling it one position, so it starts
     # from left neighbor of dir
@@ -147,11 +205,21 @@ def find_next_dir(pos, dir: Dir, can_go):
 
 def set_path_square(path, path_square, pos, shape):
     '''
-    set_path_square - set a path square at the specified position
-    @param path - output parameter. Path for which to set the square
-    @param path_square - square to be set
-    @param pos - node position at which to set the square
-    @param shape - node shape HxW
+    set a path square at the specified position
+
+    Parameters
+    ----------
+    path : array, output parameter
+        Path for which to set the square
+
+    path_square : integer
+        square to be set
+
+    pos : array
+        node position at which to set the square
+
+    shape : array
+        node shape HxW
     '''
     node_id = nav.get_node_id(pos, shape)
     if (path[node_id] == 0):
