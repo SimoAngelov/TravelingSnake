@@ -34,6 +34,7 @@ def generate_path(shape, is_print_edges = False):
                             half_shape, edges, visited)
 
     if is_print_edges:
+        print(f'edges: {edges}')
         dirs = nav.get_dir_array()
         for i in range(edges.size):
             res = ''
