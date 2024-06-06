@@ -2,6 +2,7 @@ import numpy as np
 import nav
 from nav import Dir, Axis, Dmn
 
+
 def generate_path(shape, is_print_edges = False):
     '''
     generate hamiltonian path
@@ -17,8 +18,15 @@ def generate_path(shape, is_print_edges = False):
     Returns
     -------
     array
-        an array which is the hamiltonian path. The values are node ids
+        an array which is the hamiltonian path. The values are node ids.
+        If the shape can't produce a valid hamiltonian path, an empty array is returned.
     '''
+    if shape[Dmn.W] * shape[Dmn.H] % 2 != 0 or shape[Dmn.W] == 1 or shape[Dmn.H] == 1:
+        return np.empty(shape = 0, dtype=np.int64)
+
+    if shape[Dmn.W] % 2 != 0 or shape[Dmn.H] % 2 != 0:
+        return generate_path_with_odd_dimension(shape)
+
     half_shape = nav.create_pos(shape[Dmn.H] / 2, shape[Dmn.W] / 2)
     edges = np.zeros(half_shape[Dmn.W] * half_shape[Dmn.H], dtype=np.int8)
     visited = np.zeros(len(edges), dtype=bool)
@@ -115,7 +123,7 @@ def generate_hamilton_cycle(edges, shape):
     Returns
     -------
     array
-        array which is the hamiltonian cycle from the specified edges. The values are edges
+        array which is the hamiltonian cycle from the specified edges. The values are indices in the path
     '''
     hamilton_cycle = np.zeros(np.int64(shape[Dmn.W] * shape[Dmn.H]), dtype=np.int64)
     def can_go(dir, pos):
@@ -224,3 +232,110 @@ def set_path_square(path, path_square, pos, shape):
     node_id = nav.get_node_id(pos, shape)
     if (path[node_id] == 0):
         path[node_id] = path_square
+
+def get_turning_points_odd_w(w, h, get_id):
+    '''
+    retrieve a dictionary of turning points where the path has an odd width
+
+    Parameters
+    ----------
+    w : integer
+        width of the grid
+
+    h : integer
+        height of the grid
+
+    get_id : function
+        a callback to retrieve a node id from x, y coordinates
+
+    Returns
+    -------
+        turning_points : dict
+        a dictionary of turning mode ids and directions they turn
+    '''
+    turning_points = {get_id(x = w - 1) : Dir.Down}
+    switch = False
+    for i in range(1, h):
+        x1 = 1 if i % 2 == 0 else w - 1
+        x2 = w - 1 if i % 2 == 0 else 1
+        turning_points[get_id(x1, i)] = Dir.Right if switch else Dir.Left
+        switch = not switch
+        if i < h - 1:
+            turning_points[get_id(x2, i)] = Dir.Down
+
+    turning_points[get_id(y = h - 1)] = Dir.Up
+    return turning_points
+
+
+def get_turning_points_odd_h(w, h, get_id):
+    '''
+    retrieve a dictionary of turning points where the path has an odd height
+
+    Parameters
+    ----------
+    w : integer
+        width of the grid
+
+    h : integer
+        height of the grid
+
+    get_id : function
+        a callback to retrieve a node id from x, y coordinates
+
+    Returns
+    -------
+        turning_points : dict
+        a dictionary of turning mode ids and directions they turn
+    '''
+    turning_points = {get_id(x = w - 1) : Dir.Down}
+    switch = False
+    for i in range(w - 1, -1, -1):
+        y1 = 1 if i % 2 == 0 else h - 1
+        y2 = h - 1 if i % 2 == 0 else 1
+        if i > 0:
+            turning_points[get_id(i, y1)] = Dir.Left
+        if i < w - 1:
+            turning_points[get_id(i, y2)] = Dir.Down if switch else Dir.Up
+            switch = not switch
+
+        print(f'i -> {i}, y1: {y1}, y2: {y2}, id_1: {get_id(i, y1)}, id_2: {get_id(i, y2)}')
+    return turning_points
+
+
+def generate_path_with_odd_dimension(shape):
+    '''
+    generate a hamiltonian path where one of the dimensions is odd
+
+    Parameters
+    ----------
+    shape : array
+        node shape HxW
+
+    Returns
+    -------
+    path : array
+        array which is the hamiltonian cycle. The values are indices in the path
+    '''
+    w = shape[Dmn.W]
+    h = shape[Dmn.H]
+    get_id = lambda x = 0, y = 0: nav.get_node_id(nav.create_pos(x, y), shape)
+
+    path = np.zeros(shape = w * h, dtype = np.int64)
+    turning_points = {}
+    if h % 2 != 0:
+        turning_points = get_turning_points_odd_h(w, h, get_id)
+    elif w % 2 != 0:
+        turning_points = get_turning_points_odd_w(w, h, get_id)
+
+    print(f'turning_points: {turning_points}')
+    dir = Dir.Right
+    pos = nav.create_pos()
+    for i in range(len(path)):
+        curr_id = nav.get_node_id(pos, shape)
+        path[curr_id] = i
+        curr_dir = turning_points.get(curr_id)
+        if curr_dir is not None:
+            dir = curr_dir
+        pos = nav.get_next_pos(pos, dir)
+
+    return path

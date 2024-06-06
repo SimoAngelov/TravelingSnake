@@ -197,7 +197,7 @@ def get_node_id(pos, shape):
         node x,y position
 
     shape : array
-        node shape WxH
+        node shape HxW
 
     Returns
     -------
@@ -220,7 +220,7 @@ def get_next_node_id(node_id, dir, shape):
         direction in which to move from node_id
 
     shape : array
-        node shape WxH
+        node shape HxW
 
     Returns
     -------
@@ -244,7 +244,7 @@ def get_dir_between(start, end, node_shape):
     end : integer
         end node ide
     node_shape : array
-        node shape WxH
+        node shape HxW
 
     Returns
     -------
@@ -275,7 +275,7 @@ def path_distance(start_node, end_node, shape):
         id of the end node
 
     shape : array
-        node shape WxH
+        node shape HxW
 
     Returns
     -------
@@ -296,7 +296,7 @@ def is_out_of_bounds(pos, shape):
         x, y position to be queried
 
     shape : array
-        node shape WxH
+        node shape HxW
 
     Returns
     -------
