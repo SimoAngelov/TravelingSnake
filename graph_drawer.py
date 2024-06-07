@@ -1,8 +1,16 @@
 
 import networkx as nx
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import numpy as np
 from itertools import combinations
+
+import nav
+from nav import Dir, Axis, Dmn
+
+import hamilton_cycle_generator as hcg
+
+plt.ioff()
 
 def create_graph_edges(nodes, is_weighted):
     '''
@@ -227,3 +235,50 @@ def draw_hamilton_example():
             else:
                 edges_to_remove.append([(j, i), (j, i + 1)])
     draw_grid_graph("Hamiltonian Cycle with one even dimension", m, n, edges_to_remove, node_size = 300)
+
+def animate_prim_mst(shape, seed):
+    half_shape = nav.create_pos(shape[Dmn.H] / 2, shape[Dmn.W] / 2)
+    mst, visited, prim_path = hcg.generate_prim_mst(nav.create_pos(-1, -1), nav.create_pos(), half_shape, seed)
+    hamilton_path = hcg.generate_hamilton_cycle(mst, shape)
+
+    fig = plt.figure()
+
+    G = nx.Graph()
+    nodes = [x for x in range(len(prim_path))]
+    pos = {}
+    node_size = 30
+    for node in nodes:
+        node_pos = nav.get_node_pos(node, half_shape)
+        pos[node] = (node_pos[Axis.X] * 3 * node_size + 1, node_pos[Axis.Y] * 3 * node_size + 1)
+
+    G.add_nodes_from(prim_path)
+    print(f'nodes: {nodes}')
+
+    frames = len(prim_path) - 1
+
+
+    def draw_prim():
+        ax = fig.gca()
+        x_lim = (shape[Dmn.W] + half_shape[Dmn.W]) * node_size
+        y_lim = (shape[Dmn.H] + half_shape[Dmn.H]) * node_size
+        ax.set(xlim=[0, x_lim], ylim=[y_lim, 0])
+
+        nx.draw(G, pos=pos,
+            node_color="blue",
+            with_labels = True,
+            node_size=300)
+
+    is_still = False
+
+
+    print(f'pos -> {pos}')
+
+    def animate(frame):
+        fig.clear()
+        G.add_edge(prim_path[frame], prim_path[frame + 1])
+        print(f'pos[frame: {frame}] -> {pos}')
+        draw_prim()
+        return G
+
+    ani = animation.FuncAnimation(fig, animate, frames=frames, interval=1000, repeat=False)
+    return ani

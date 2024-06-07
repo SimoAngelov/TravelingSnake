@@ -34,10 +34,10 @@ def generate_path(shape, seed = 0, is_print_mst = False):
 
     # Use Prim's MST to generate an mst and a hamiltonian cycle
     half_shape = nav.create_pos(shape[Dmn.H] / 2, shape[Dmn.W] / 2)
-    mst, visited = generate_prim_mst(nav.create_pos(-1, -1), nav.create_pos(), half_shape, seed)
+    mst, visited, prim_path = generate_prim_mst(nav.create_pos(-1, -1), nav.create_pos(), half_shape, seed)
 
     if is_print_mst:
-        print(f'mst: {mst}')
+        print(f'mst: {mst},\nprim_path: {prim_path}')
         dirs = nav.get_dir_array()
         for i in range(mst.size):
             res = ''
@@ -47,7 +47,7 @@ def generate_path(shape, seed = 0, is_print_mst = False):
             print(f'edge[{i}]: {res}')
     return generate_hamilton_cycle(mst, shape)
 
-def generate_prim_mst(prev_pos, pos, shape, seed, mst = None, visited = None):
+def generate_prim_mst(prev_pos, pos, shape, seed, mst = None, visited = None, prim_path = None):
     '''
     recursively defined method to generate a minimum spanning tree, using Prim's algorithm
 
@@ -62,34 +62,38 @@ def generate_prim_mst(prev_pos, pos, shape, seed, mst = None, visited = None):
     shape : array
         node shape HxW
 
-    mst : array, output parameter
-        minimum spanning tree for which to add a node
-
-    visited : array, output parameter
-        keep trach of which node was visited
-
     seed : integer, optional
         used to seed the default rng, by default is none
+
+    mst : array, optional
+        minimum spanning tree for which to add a node,
+        indices are nodes, values are direction masks,
+        default is None
+
+    visited : array, optional
+        keep trach of which node was visited, by default is None
+
+    prim_path : list, optional
+        contains the path constructed by the mst, by default is None
 
     Returns
     -------
     Tuple
-        a tuple of the current mst and the visited nodes
+        a tuple of the current mst, he visited nodes and the prim path
     '''
-
     if mst is None:
-        mst = np.zeros(shape[Dmn.W] * shape[Dmn.H], dtype=np.int8)
+        mst = np.zeros(shape[Dmn.W] * shape[Dmn.H], dtype = np.int8)
 
     if visited is None:
-        visited = np.zeros(len(mst), dtype=bool)
+        visited = np.zeros(len(mst), dtype = bool)
 
     if pos[Axis.X] < 0 or pos[Axis.Y] < 0 or pos[Axis.X] >= shape[Dmn.W] or pos[Axis.Y] >= shape[Dmn.H]:
-        return (mst, visited)
+        return (mst, visited, prim_path)
 
     curr_node_id = nav.get_node_id(pos, shape)
 
     if visited[curr_node_id]:
-        return (mst, visited)
+        return (mst, visited, prim_path)
     visited[curr_node_id] = True
 
     # Remove wall between fromX and fromY
@@ -107,7 +111,9 @@ def generate_prim_mst(prev_pos, pos, shape, seed, mst = None, visited = None):
         elif prev_pos[Axis.Y] > pos[Axis.Y]:
             mst[prev_node_id] = nav.set_dir(mst[prev_node_id], Dir.Up)
             mst[curr_node_id] = nav.set_dir(mst[curr_node_id], Dir.Down)
-
+        if prim_path is None:
+            prim_path = [prev_node_id]
+        prim_path.append(curr_node_id)
 
     # We want to vist the four connected nodes randomly,
     # so we just visit two randomly (maybe already visited)
@@ -120,14 +126,14 @@ def generate_prim_mst(prev_pos, pos, shape, seed, mst = None, visited = None):
     for i in range(Axis.COUNT):
         dir = rng.choice(dir_array)
         next_pos = nav.get_next_pos(pos, dir)
-        mst, visited = generate_prim_mst(pos, next_pos, shape, seed, mst, visited)
+        mst, visited, prim_path = generate_prim_mst(pos, next_pos, shape, seed, mst, visited, prim_path)
 
     for i in range(len(dir_array)):
         dir = dir_array[i]
         next_pos = nav.get_next_pos(pos, dir)
-        mst, visited = generate_prim_mst(pos, next_pos, shape, seed, mst, visited)
+        mst, visited, prim_path = generate_prim_mst(pos, next_pos, shape, seed, mst, visited, prim_path)
 
-    return (mst, visited)
+    return (mst, visited, prim_path)
 
 def generate_hamilton_cycle(mst, shape):
     '''
