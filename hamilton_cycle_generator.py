@@ -3,7 +3,7 @@ import nav
 from nav import Dir, Axis, Dmn
 
 
-def generate_path(shape, is_print_edges = False):
+def generate_path(shape, seed = 0, is_print_mst = False):
     '''
     generate hamiltonian path
 
@@ -12,8 +12,11 @@ def generate_path(shape, is_print_edges = False):
     shape : array
         node shape HxW
 
-    is_print_edges : bool, optional
-        whether to print the edges from Prim's MST algorithm, by default is False
+    seed : integer, optional
+        used to seed the default rng, by default is none
+
+    is_print_mst : bool, optional
+        whether to print the minimum spanning tree from Prim's MST algorithm, by default is False
 
     Returns
     -------
@@ -21,74 +24,89 @@ def generate_path(shape, is_print_edges = False):
         an array which is the hamiltonian path. The values are node ids.
         If the shape can't produce a valid hamiltonian path, an empty array is returned.
     '''
+    # The shape doesn't contain a valid hamiltonian cycle
     if shape[Dmn.W] * shape[Dmn.H] % 2 != 0 or shape[Dmn.W] == 1 or shape[Dmn.H] == 1:
         return np.empty(shape = 0, dtype=np.int64)
 
+    # The shape has an odd dimension, so Prim's MST can't be used in this case
     if shape[Dmn.W] % 2 != 0 or shape[Dmn.H] % 2 != 0:
         return generate_path_with_odd_dimension(shape)
 
+    # Use Prim's MST to generate an mst and a hamiltonian cycle
     half_shape = nav.create_pos(shape[Dmn.H] / 2, shape[Dmn.W] / 2)
-    edges = np.zeros(half_shape[Dmn.W] * half_shape[Dmn.H], dtype=np.int8)
-    visited = np.zeros(len(edges), dtype=bool)
-    edges = generate_edges(nav.create_pos(-1, -1), nav.create_pos(),
-                            half_shape, edges, visited)
+    mst, visited = generate_prim_mst(nav.create_pos(-1, -1), nav.create_pos(), half_shape, seed)
 
-    if is_print_edges:
-        print(f'edges: {edges}')
+    if is_print_mst:
+        print(f'mst: {mst}')
         dirs = nav.get_dir_array()
-        for i in range(edges.size):
+        for i in range(mst.size):
             res = ''
             for dir in dirs:
-                if nav.is_dir(edges[i], dir):
+                if nav.is_dir(mst[i], dir):
                     res = f'{res}, {dir}'
             print(f'edge[{i}]: {res}')
-    return generate_hamilton_cycle(edges, shape)
+    return generate_hamilton_cycle(mst, shape)
 
-def generate_edges(prev_pos, pos, shape, edges, visited):
+def generate_prim_mst(prev_pos, pos, shape, seed, mst = None, visited = None):
     '''
-    recursively defined method to generate node edges, using Prim's algorithm
+    recursively defined method to generate a minimum spanning tree, using Prim's algorithm
 
     Parameters
     ----------
     prev_pos : array
-        previous position from which to connect an edge
+        previous mst node position from which to connect an edge
 
     pos : array
-        current position to which to connect an edge
+        current node position to be added to the mst and connect and edge to
 
     shape : array
         node shape HxW
 
-    edges : array, output parameter
-        edges to be set at the specified positions
+    mst : array, output parameter
+        minimum spanning tree for which to add a node
 
     visited : array, output parameter
         keep trach of which node was visited
+
+    seed : integer, optional
+        used to seed the default rng, by default is none
+
+    Returns
+    -------
+    Tuple
+        a tuple of the current mst and the visited nodes
     '''
+
+    if mst is None:
+        mst = np.zeros(shape[Dmn.W] * shape[Dmn.H], dtype=np.int8)
+
+    if visited is None:
+        visited = np.zeros(len(mst), dtype=bool)
+
     if pos[Axis.X] < 0 or pos[Axis.Y] < 0 or pos[Axis.X] >= shape[Dmn.W] or pos[Axis.Y] >= shape[Dmn.H]:
-        return
+        return (mst, visited)
 
     curr_node_id = nav.get_node_id(pos, shape)
 
     if visited[curr_node_id]:
-        return
+        return (mst, visited)
     visited[curr_node_id] = True
 
     # Remove wall between fromX and fromY
     if prev_pos[Axis.X] != -1:
         prev_node_id = nav.get_node_id(prev_pos, shape)
         if prev_pos[Axis.X] < pos[Axis.X]:
-            edges[prev_node_id] = nav.set_dir(edges[prev_node_id], Dir.Right)
-            edges[curr_node_id] = nav.set_dir(edges[curr_node_id], Dir.Left)
+            mst[prev_node_id] = nav.set_dir(mst[prev_node_id], Dir.Right)
+            mst[curr_node_id] = nav.set_dir(mst[curr_node_id], Dir.Left)
         elif prev_pos[Axis.X] > pos[Axis.X]:
-            edges[prev_node_id] = nav.set_dir(edges[prev_node_id], Dir.Left)
-            edges[curr_node_id] = nav.set_dir(edges[curr_node_id], Dir.Right)
+            mst[prev_node_id] = nav.set_dir(mst[prev_node_id], Dir.Left)
+            mst[curr_node_id] = nav.set_dir(mst[curr_node_id], Dir.Right)
         elif prev_pos[Axis.Y] < pos[Axis.Y]:
-            edges[prev_node_id] = nav.set_dir(edges[prev_node_id], Dir.Down)
-            edges[curr_node_id] = nav.set_dir(edges[curr_node_id], Dir.Up)
+            mst[prev_node_id] = nav.set_dir(mst[prev_node_id], Dir.Down)
+            mst[curr_node_id] = nav.set_dir(mst[curr_node_id], Dir.Up)
         elif prev_pos[Axis.Y] > pos[Axis.Y]:
-            edges[prev_node_id] = nav.set_dir(edges[prev_node_id], Dir.Up)
-            edges[curr_node_id] = nav.set_dir(edges[curr_node_id], Dir.Down)
+            mst[prev_node_id] = nav.set_dir(mst[prev_node_id], Dir.Up)
+            mst[curr_node_id] = nav.set_dir(mst[curr_node_id], Dir.Down)
 
 
     # We want to vist the four connected nodes randomly,
@@ -96,27 +114,29 @@ def generate_edges(prev_pos, pos, shape, edges, visited):
     # then just visit them all non-randomly. It's okay to
     # visit the same node twice.
     dir_array = nav.get_dir_array()
-    rng = np.random.default_rng()
+    seed_seq = np.random.SeedSequence(entropy = seed)
+    rng = np.random.default_rng(seed_seq)
 
     for i in range(Axis.COUNT):
         dir = rng.choice(dir_array)
         next_pos = nav.get_next_pos(pos, dir)
-        generate_edges(pos, next_pos, shape, edges, visited)
+        mst, visited = generate_prim_mst(pos, next_pos, shape, seed, mst, visited)
 
     for i in range(len(dir_array)):
         dir = dir_array[i]
         next_pos = nav.get_next_pos(pos, dir)
-        generate_edges(pos, next_pos, shape, edges, visited)
-    return edges
+        mst, visited = generate_prim_mst(pos, next_pos, shape, seed, mst, visited)
 
-def generate_hamilton_cycle(edges, shape):
+    return (mst, visited)
+
+def generate_hamilton_cycle(mst, shape):
     '''
-    generate a hamiltonian cycle from the specified edges
+    generate a hamiltonian cycle from the specified mst
 
     Parameters
     ----------
-    edges : array
-        valid edges between nodes
+    mst : array
+        mininum spanning tree from which to construct the hamiltonian cycle
 
     shape : array
         node shape HxW
@@ -124,7 +144,7 @@ def generate_hamilton_cycle(edges, shape):
     Returns
     -------
     array
-        array which is the hamiltonian cycle from the specified edges. The values are indices in the path
+        array which is the hamiltonian cycle from the specified mst. The values are indices in the path
     '''
     hamilton_cycle = np.zeros(np.int64(shape[Dmn.W] * shape[Dmn.H]), dtype=np.int64)
     def can_go(dir, pos):
@@ -145,9 +165,9 @@ def generate_hamilton_cycle(edges, shape):
             True, if we can go from the current position in the desired direction
         '''
         node_id = nav.get_node_id(pos, shape / 2)
-        if node_id >= edges.size:
+        if node_id >= mst.size:
             return False
-        return nav.is_dir(edges[node_id], dir)
+        return nav.is_dir(mst[node_id], dir)
 
     pos = nav.create_pos()
     dir = Dir.Up if can_go(Dir.Down, pos) else Dir.Left

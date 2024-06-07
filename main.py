@@ -9,10 +9,11 @@ SCREEN_TITLE = "Traveling Snake"
 NODE_SIZE = 20
 NODE_SHAPE = [6, 6]
 FPS = 60
+SEED = 6
 
 def main():
     """ Main function """
-    snake_game = SnakeGame(SCREEN_TITLE, FPS, NODE_SHAPE, NODE_SIZE)
+    snake_game = SnakeGame(SCREEN_TITLE, FPS, NODE_SHAPE, NODE_SIZE, SEED)
     snake_game.setup()
     arcade.run()
 

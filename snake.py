@@ -14,7 +14,7 @@ def create_empty_snake():
     '''
     return np.empty(shape = 0, dtype = np.int64)
 
-def move(snake, dir, food, all_nodes, node_shape):
+def move(snake, dir, food, all_nodes, seed, node_shape):
     '''
     move the snake and check for collisions
 
@@ -35,6 +35,9 @@ def move(snake, dir, food, all_nodes, node_shape):
     node_shape : array
         node shape WxH
 
+    seed : integer
+        used to seed the default rng
+
     Returns
     -------
     Tuple
@@ -44,7 +47,7 @@ def move(snake, dir, food, all_nodes, node_shape):
 
     if (new_head == food):
         snake = np.append([food], snake)
-        food = create_food(snake, all_nodes)
+        food = create_food(snake, all_nodes, seed)
     elif (new_head in snake):
         snake = create_empty_snake()
     else:
@@ -53,9 +56,9 @@ def move(snake, dir, food, all_nodes, node_shape):
 
     return snake, food
 
-def create_food(snake, all_nodes):
+def create_food(snake, all_nodes, seed):
     '''
-    create food
+    create a food on the board
 
     Parameters
     ----------
@@ -66,15 +69,19 @@ def create_food(snake, all_nodes):
     all_nodes : array
         all node ids on the board
 
+    seed : integer
+        used to seed the default rng
+
     Returns
     -------
     integer
         a node id of the newly created food
     '''
-    rng = np.random.default_rng()
     free = np.setdiff1d(all_nodes, snake)
     if (len(free) == 0):
         return -1
+    seed_seq = np.random.SeedSequence(entropy = seed)
+    rng = np.random.default_rng(seed_seq)
     return rng.choice(free)
 
 def offset_pos(t, node_size):
