@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
 from itertools import combinations
+from IPython.display import HTML
 
 import nav
 from nav import Dir, Axis, Dmn
@@ -236,49 +237,70 @@ def draw_hamilton_example():
                 edges_to_remove.append([(j, i), (j, i + 1)])
     draw_grid_graph("Hamiltonian Cycle with one even dimension", m, n, edges_to_remove, node_size = 300)
 
-def animate_prim_mst(shape, seed):
+def animate_prim_mst(shape, seed, is_html = False, node_size = 100):
     half_shape = nav.create_pos(shape[Dmn.H] / 2, shape[Dmn.W] / 2)
     mst, visited, prim_path = hcg.generate_prim_mst(nav.create_pos(-1, -1), nav.create_pos(), half_shape, seed)
     hamilton_path = hcg.generate_hamilton_cycle(mst, shape)
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=[4, 4])
+
+    offset = node_size * 10
+
+    frames = len(prim_path)
+
+    h_graph = nx.Graph()
+    h_nodes = [x for x in range(len(hamilton_path))]
+    h_graph.add_nodes_from(h_nodes)
+    h_pos = {}
 
     G = nx.Graph()
-    nodes = [x for x in range(len(prim_path))]
-    pos = {}
-    node_size = 30
-    for node in nodes:
-        node_pos = nav.get_node_pos(node, half_shape)
-        pos[node] = (node_pos[Axis.X] * 3 * node_size + 1, node_pos[Axis.Y] * 3 * node_size + 1)
+    prim_pos = {}
 
     G.add_nodes_from(prim_path)
-    print(f'nodes: {nodes}')
 
-    frames = len(prim_path) - 1
+    p_i = 0
+    for node in h_nodes:
+        node_pos = nav.get_node_pos(node, shape)
+        h_pos[node] = (node_pos[Axis.X] * offset, node_pos[Axis.Y] * offset)
+        if node_pos[Axis.X] % 2 == 0 and node_pos[Axis.Y] % 2 == 0:
+            prim_pos[p_i] = (h_pos[node][Axis.X] + offset * 0.5, h_pos[node][Axis.Y] + offset * 0.5)
+            p_i += 1
 
-
+    print(f'prim_pos: {prim_pos}')
     def draw_prim():
         ax = fig.gca()
-        x_lim = (shape[Dmn.W] + half_shape[Dmn.W]) * node_size
-        y_lim = (shape[Dmn.H] + half_shape[Dmn.H]) * node_size
+        x_lim = (shape[Dmn.W]) * offset
+        y_lim = (shape[Dmn.H]) * offset
         ax.set(xlim=[0, x_lim], ylim=[y_lim, 0])
 
-        nx.draw(G, pos=pos,
+        left, right = ax.get_xlim()
+        bottom, top = ax.get_ylim()
+
+
+        xs = [left, left, right, right, left]
+        ys = [top, bottom, bottom, top, top]
+
+
+        plt.scatter(xs, ys)
+
+        nx.draw(G, pos=prim_pos,
             node_color="blue",
             with_labels = True,
-            node_size=300)
+            node_size=node_size,
+            font_color="white")
 
-    is_still = False
-
-
-    print(f'pos -> {pos}')
+        nx.draw(h_graph, pos = h_pos, node_color = "cyan", with_labels = True, node_size = node_size, font_color = "black")
 
     def animate(frame):
         fig.clear()
-        G.add_edge(prim_path[frame], prim_path[frame + 1])
-        print(f'pos[frame: {frame}] -> {pos}')
+        if frame > 0:
+            G.add_edge(prim_path[frame - 1], prim_path[frame])
         draw_prim()
         return G
 
-    ani = animation.FuncAnimation(fig, animate, frames=frames, interval=1000, repeat=False)
-    return ani
+    anim = animation.FuncAnimation(fig, animate, frames=frames, interval=1000, repeat=False)
+    if not is_html:
+        plt.show()
+    return HTML(anim.to_jshtml())
+
+#animate_prim_mst(nav.create_pos(6, 6), seed = 7, is_html = False)
