@@ -166,6 +166,11 @@ def create_pos(x = 0, y = 0):
     '''
     return np.array([x, y], dtype = np.int64)
 
+def create_random_pos(shape):
+    x_rand = np.random.randint(shape[Dmn.W])
+    y_rand = np.random.randint(shape[Dmn.H])
+    return create_pos(x_rand, y_rand)
+
 def get_node_pos(id, shape):
     '''
     retrieve the position of the specified node

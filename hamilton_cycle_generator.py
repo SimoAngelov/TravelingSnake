@@ -34,7 +34,7 @@ def generate_path(shape, seed = 0, is_print_mst = False):
 
     # Use Prim's MST to generate an mst and a hamiltonian cycle
     half_shape = nav.create_pos(shape[Dmn.H] / 2, shape[Dmn.W] / 2)
-    mst, visited, prim_path = generate_prim_mst(nav.create_pos(-1, -1), nav.create_pos(), half_shape, seed)
+    mst, visited, prim_path = generate_prim_mst(nav.create_pos(-1, -1), nav.create_random_pos(), half_shape, seed)
 
     if is_print_mst:
         print(f'mst: {mst},\nprim_path: {prim_path}')
@@ -113,13 +113,14 @@ def generate_prim_mst(prev_pos, pos, shape, seed, mst = None, visited = None, pr
             mst[curr_node_id] = nav.set_dir(mst[curr_node_id], Dir.Down)
         if prim_path is None:
             prim_path = [prev_node_id]
+        print(f'prev_pos: {prev_pos}, curr_pos: {pos}')
         prim_path.append(curr_node_id)
 
     # We want to vist the four connected nodes randomly,
     # so we just visit two randomly (maybe already visited)
     # then just visit them all non-randomly. It's okay to
     # visit the same node twice.
-    dir_array = nav.get_dir_array()
+    dir_array = nav.get_dir_array(start = Dir.Right)
     seed_seq = np.random.SeedSequence(entropy = seed)
     rng = np.random.default_rng(seed_seq)
 

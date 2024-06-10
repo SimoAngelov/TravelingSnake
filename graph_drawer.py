@@ -239,7 +239,7 @@ def draw_hamilton_example():
 
 def animate_prim_mst(shape, seed, is_html = False, node_size = 100):
     half_shape = nav.create_pos(shape[Dmn.H] / 2, shape[Dmn.W] / 2)
-    mst, visited, prim_path = hcg.generate_prim_mst(nav.create_pos(-1, -1), nav.create_pos(), half_shape, seed)
+    mst, visited, prim_path = hcg.generate_prim_mst(nav.create_pos(-1, -1), nav.create_random_pos(half_shape), half_shape, seed)
     hamilton_path = hcg.generate_hamilton_cycle(mst, shape)
 
     fig = plt.figure(figsize=[4, 4])
@@ -289,7 +289,7 @@ def animate_prim_mst(shape, seed, is_html = False, node_size = 100):
             node_size=node_size,
             font_color="white")
 
-        nx.draw(h_graph, pos = h_pos, node_color = "cyan", with_labels = True, node_size = node_size, font_color = "black")
+        #nx.draw(h_graph, pos = h_pos, node_color = "cyan", with_labels = True, node_size = node_size, font_color = "black")
 
     def animate(frame):
         fig.clear()
@@ -302,5 +302,3 @@ def animate_prim_mst(shape, seed, is_html = False, node_size = 100):
     if not is_html:
         plt.show()
     return HTML(anim.to_jshtml())
-
-#animate_prim_mst(nav.create_pos(6, 6), seed = 7, is_html = False)
