@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
 from itertools import combinations
-from IPython.display import HTML
+import scipy as sp
+from IPython.display import HTML, SVG, display
 
 import nav
 from nav import Dir, Axis, Dmn
@@ -302,3 +303,65 @@ def animate_prim_mst(shape, seed, is_html = False, node_size = 100):
     if not is_html:
         plt.show()
     return HTML(anim.to_jshtml())
+
+
+def plot_functions(function_array, n, title, x_label, y_label):
+    '''
+    plot the specified functions
+
+    Parameters
+    ----------
+    function_array : array[tuple(title, function)]
+        an array of tuples. Each tuple has the following fields
+        [0] - title of the function
+        [1] - the function to be executed
+
+    n : integer
+        number of items to be calculated
+
+    title : string
+        title of the plot
+
+    x_label : string
+        label for the x-axis
+
+    y_label : string
+        label for the y-axis
+    '''
+    xs = np.linspace(0, n)
+
+    for item in function_array:
+        func_name = item[0]
+        func = item[1]
+        ys = np.vectorize(func)(xs)
+        plt.plot(xs, ys, label=func_name)
+
+    ax = plt.gca()
+    ax.set_ylim(0, n)
+    ax.set_xlim(0, n)
+    ax.set_aspect('equal')
+
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.legend()
+    plt.title(title)
+    plt.show()
+
+def plot_time_complexity(n = 15):
+    '''
+    plot the different complexity classes
+
+    Parameters
+    ----------
+    n : integer
+        number of items to be calculated
+    '''
+    classes = np.array([("O(1)", lambda n: 1),
+                        ("O(n)", lambda n : n),
+                        ("O(n * log(n))", lambda n : n * np.log(n) if n > 0 else 0),
+                        ("O(n ** 2)", lambda n : n ** 2),
+                        ("O(n ** 3)", lambda n : n ** 3),
+                        ("O(2 ** n)", lambda n : 2 ** n),
+                        ("O(n!)", lambda n : sp.special.gamma(n))])
+
+    plot_functions(classes, n, "Different complexity classes", "Input size n", "Time")
