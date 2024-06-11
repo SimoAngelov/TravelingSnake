@@ -305,7 +305,7 @@ def animate_prim_mst(shape, seed, is_html = False, node_size = 100):
     return HTML(anim.to_jshtml())
 
 
-def plot_functions(function_array, n, title, x_label, y_label):
+def plot_functions(function_array, x_max, y_max, title, x_label, y_label):
     '''
     plot the specified functions
 
@@ -316,8 +316,11 @@ def plot_functions(function_array, n, title, x_label, y_label):
         [0] - title of the function
         [1] - the function to be executed
 
-    n : integer
-        number of items to be calculated
+    x_max : float
+        maximum x value
+
+    y_max : float
+        maximim y value
 
     title : string
         title of the plot
@@ -328,7 +331,7 @@ def plot_functions(function_array, n, title, x_label, y_label):
     y_label : string
         label for the y-axis
     '''
-    xs = np.linspace(0, n)
+    xs = np.linspace(0, x_max)
 
     for item in function_array:
         func_name = item[0]
@@ -337,12 +340,14 @@ def plot_functions(function_array, n, title, x_label, y_label):
         plt.plot(xs, ys, label=func_name)
 
     ax = plt.gca()
-    ax.set_ylim(0, n)
-    ax.set_xlim(0, n)
+    ax.set_xlim(0, x_max)
+    ax.set_ylim(0, y_max)
     ax.set_aspect('equal')
 
     plt.xlabel(x_label)
     plt.ylabel(y_label)
+    plt.xticks(range(x_max + 1))
+    plt.yticks(range(y_max + 1))
     plt.legend()
     plt.title(title)
     plt.show()
@@ -364,4 +369,4 @@ def plot_time_complexity(n = 15):
                         ("$\mathcal{O}\left({2^n}\\right)$", lambda n : 2 ** n),
                         ("$\mathcal{O}\left({n!}\\right)$", lambda n : sp.special.gamma(n))])
 
-    plot_functions(classes, n, "Different complexity classes", "Input size n", "Time")
+    plot_functions(classes, n, n, "Different complexity classes", "Input size n", "Time")
