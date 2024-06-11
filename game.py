@@ -1,5 +1,9 @@
 
 import arcade
+import arcade.key
+import arcade.key
+import arcade.key
+import arcade.key
 import numpy as np
 from enum import IntEnum
 
@@ -96,7 +100,7 @@ class SnakeGame(arcade.Window):
         Normally, you'll call update() on the sprite lists that
         need it.
         """
-        algo = Algo.TAKE_SHORTCUTS
+        algo = Algo.NONE
         self.algo_step(algo)
 
 
@@ -104,6 +108,19 @@ class SnakeGame(arcade.Window):
         if key == arcade.key.N:
             self.algo_step(Algo.NONE)
             print(f'\n\n')
+
+        dirs = {
+             arcade.key.W : Dir.Up,
+             arcade.key.A: Dir.Left,
+             arcade.key.S: Dir.Down,
+             arcade.key.D: Dir.Right
+        }
+        self.m_head_dir = dirs.get(key)
+        if self.m_head_dir is not None:
+            self.m_snake, self.m_food = snake.move(self.m_snake, self.m_head_dir, self.m_food, self.m_all_nodes,
+                                        self.m_seed, self.m_node_shape)
+            if (self.m_snake.size == 0 or self.m_food == -1):
+                self.setup()
 
     def draw_square(self, square, color, square_size, w):
         '''
@@ -142,10 +159,40 @@ class SnakeGame(arcade.Window):
             number of squares in the width dimension
         '''
 
-        for i in range(snake.size):
-            j = snake.size - 1 - i
+        snake_len = len(snake)
+        for i in range(snake_len):
+            j = snake_len - 1 - i
             color = arcade.color.AIR_SUPERIORITY_BLUE if j > 0 else arcade.color.RADICAL_RED
-            self.draw_square(snake[j], color, square_size, w)
+            if j == 0:
+                self.draw_triangle(snake[j], color, self.m_head_dir, square_size, w)
+            else:
+                self.draw_square(snake[j], color, square_size, w)
+
+    def draw_triangle(self, square, color, dir, square_size, w):
+        coords = self.get_triangle_coords(square, dir, square_size, w)
+        arcade.draw_triangle_filled(coords[0], coords[1], coords[2],
+                                    coords[3], coords[4], coords[5], color)
+
+    def get_triangle_coords(self, square, dir, square_size, w):
+        x = snake.offset_pos(square % w, square_size)
+        y = self.height - snake.offset_pos(square / w, square_size)
+
+        half = square_size * 0.5
+
+        offsets = {
+            Dir.Down : [-half, half, 0, -half, half, half],
+            Dir.Up: [-half, -half, 0, half, half, -half],
+            Dir.Right: [-half, -half, half, 0, -half, half],
+            Dir.Left: [half, -half, -half, 0, half, half],
+        }
+        offset = offsets.get(dir)
+        coords = []
+        for i in range(len(offset)):
+            if i % 2 == 0:
+                coords.append(x + offset[i])
+            else:
+                coords.append(y + offset[i])
+        return coords
 
     def algo_step(self, algo):
         dir = None
@@ -156,7 +203,8 @@ class SnakeGame(arcade.Window):
             dir = move_algo.fint_next_shortcut_dir(self.m_snake, self.m_food, self.m_path, self.m_node_shape)
 
         if dir is not None:
-            self.m_snake, self.m_food = snake.move(self.m_snake, dir, self.m_food, self.m_all_nodes,
+            m_head_dir = dir
+            self.m_snake, self.m_food = snake.move(self.m_snake, self.m_head_dir, self.m_food, self.m_all_nodes,
                                                    self.m_seed, self.m_node_shape)
             if (self.m_snake.size == 0 or self.m_food == -1):
                 self.setup()
@@ -195,4 +243,9 @@ class SnakeGame(arcade.Window):
     m_seed = None
     '''
     m_seed - used to seed the default rng
+    '''
+
+    m_head_dir = Dir.Up
+    '''
+    m_head_dir - snake head direction
     '''
