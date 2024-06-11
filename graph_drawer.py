@@ -356,12 +356,12 @@ def plot_time_complexity(n = 15):
     n : integer
         number of items to be calculated
     '''
-    classes = np.array([("O(1)", lambda n: 1),
-                        ("O(n)", lambda n : n),
-                        ("O(n * log(n))", lambda n : n * np.log(n) if n > 0 else 0),
-                        ("O(n ** 2)", lambda n : n ** 2),
-                        ("O(n ** 3)", lambda n : n ** 3),
-                        ("O(2 ** n)", lambda n : 2 ** n),
-                        ("O(n!)", lambda n : sp.special.gamma(n))])
+    classes = np.array([("$\mathcal{O}\left(1\\right)$", lambda n: 1),
+                        ("$\mathcal{O}\left(n\\right)$", lambda n : n),
+                        ("$\mathcal{O}\left({n * log\left(n\\right)}\\right)$", lambda n : n * np.log(n) if n > 0 else 0),
+                        ("$\mathcal{O}\left({n^2}\\right)$", lambda n : n ** 2),
+                        ("$\mathcal{O}\left({n^3}\\right)$", lambda n : n ** 3),
+                        ("$\mathcal{O}\left({2^n}\\right)$", lambda n : 2 ** n),
+                        ("$\mathcal{O}\left({n!}\\right)$", lambda n : sp.special.gamma(n))])
 
     plot_functions(classes, n, "Different complexity classes", "Input size n", "Time")
