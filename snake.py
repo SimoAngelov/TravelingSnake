@@ -83,24 +83,3 @@ def create_food(snake, all_nodes, seed):
     seed_seq = np.random.SeedSequence(entropy = seed)
     rng = np.random.default_rng(seed_seq)
     return rng.choice(free)
-
-def offset_pos(t, node_size):
-    '''
-    offset draw position
-
-    Parameters
-    ----------
-    t : integer
-        draw component to be offset
-
-    node_size : integer
-        the node size in pixels
-
-    Returns
-    -------
-    integer
-        the offset component
-    '''
-    return np.int64(t) * node_size + node_size / 2
-
-

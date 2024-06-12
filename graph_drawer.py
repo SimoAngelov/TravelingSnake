@@ -5,7 +5,7 @@ import matplotlib.animation as animation
 import numpy as np
 from itertools import combinations
 import scipy as sp
-from IPython.display import HTML, SVG, display
+from IPython.display import HTML, SVG, display, Video
 
 import nav
 from nav import Dir, Axis, Dmn
@@ -370,3 +370,9 @@ def plot_time_complexity(n = 15):
                         ("$\mathcal{O}\left({n!}\\right)$", lambda n : sp.special.gamma(n))])
 
     plot_functions(classes, n, n, "Different complexity classes", "Input size n", "Time")
+
+def get_video(path):
+    return HTML(f'\
+    <video alt="test" controls>\
+        <source src="{path}" type="video/mp4">\
+    </video>')

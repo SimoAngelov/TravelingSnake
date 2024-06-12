@@ -37,11 +37,12 @@ def find_next_dir(path, shape):
     Dir
         the next direction in the path the snake should go
     '''
+    global directions, dir_index
     if directions is None:
         directions = create_path_directions(path, shape)
-    while True:
-        yield directions[dir_index]
-        dir_index = np.int64((dir_index + 1) % len(directions))
+    dir = directions[dir_index]
+    dir_index = np.int64((dir_index + 1) % len(directions))
+    return dir
 
 
 def fint_next_shortcut_dir(snake, food, path, shape):
@@ -175,4 +176,5 @@ def set_path_dir_index(snake_head, path):
     path : array
         Hamiltonian path the snake should follow
     '''
+    global directions, dir_index
     dir_index = path[snake_head]

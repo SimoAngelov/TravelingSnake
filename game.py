@@ -4,6 +4,8 @@ import arcade.key
 import arcade.key
 import arcade.key
 import arcade.key
+import arcade.key
+import arcade.key
 import numpy as np
 from enum import IntEnum
 
@@ -17,12 +19,14 @@ import snake
 import move_algo
 from move_algo import Algo
 
+import draw_utils as du
+
 class SnakeGame(arcade.Window):
     """
     Main application class.
     """
 
-    def __init__(self, title, fps, node_shape, node_size, seed):
+    def __init__(self, title, fps, node_shape, node_size, seed, is_show_path_1d = False):
         '''
         initialize the SnakeGame class
 
@@ -49,7 +53,7 @@ class SnakeGame(arcade.Window):
 
         screen_width = np.int64(self.m_node_shape[Dmn.W] * self.m_node_size)
         screen_height = np.int64(self.m_node_shape[Dmn.H] * self.m_node_size)
-        super().__init__(screen_width, screen_height, title, update_rate=1/fps, vsync=True)
+        super().__init__(screen_width, screen_height, title, update_rate=1/fps)
 
         arcade.set_background_color(arcade.color.BLACK)
         # If you have sprite lists, you should create them here,
@@ -74,6 +78,7 @@ class SnakeGame(arcade.Window):
 
 
     def on_draw(self):
+        #arcade.set_window(self._window)
         """
         Render the screen.
         """
@@ -84,15 +89,21 @@ class SnakeGame(arcade.Window):
 
         # Call draw() on all your sprite lists below
         self.draw_snake(self.m_snake, self.m_node_size, self.m_node_shape[Dmn.W])
-        self.draw_square(self.m_food, arcade.color.GREEN, self.m_node_size, self.m_node_shape[Dmn.W])
+        du.draw_cirle(self.m_food, self.m_node_size, self.m_node_shape[Dmn.W], self.height, arcade.color.RED_VIOLET)
 
         show_path = False
         if show_path:
             for i in range(self.m_path.size):
-                x = snake.offset_pos(i % self.m_node_shape[Dmn.W], self.m_node_size)
-                y = self.height - snake.offset_pos(i / self.m_node_shape[Dmn.W], self.m_node_size)
+                coords = du.get_coords(i, self.m_node_size, self.m_node_shape[Dmn.W], self.height)
                 width = self.m_node_size
-                arcade.draw_text(self.m_path[i], x - width / 2, y, font_size = 10, align="center", width=width)
+                arcade.draw_text(self.m_path[i], coords[Axis.X] - width * 0.5, coords[Axis.Y], font_size = 10, align="center", width=width)
+
+            for i in range(self.m_node_shape[Dmn.H] + 1):
+                y = i * self.m_node_size
+                arcade.draw_line(0, y, self.width, y, arcade.color.WHITE)
+            for i in range(self.m_node_shape[Dmn.W] + 1):
+                x = i * self.m_node_size
+                arcade.draw_line(x, 0, x, self.height, arcade.color.WHITE)
 
     def on_update(self, delta_time):
         """
@@ -100,14 +111,22 @@ class SnakeGame(arcade.Window):
         Normally, you'll call update() on the sprite lists that
         need it.
         """
-        algo = Algo.NONE
+        if self.m_pause_update:
+            return
+        algo = Algo.TAKE_SHORTCUTS
         self.algo_step(algo)
 
 
     def on_key_press(self, key, key_modifiers):
+        if key == arcade.key.G:
+            self.m_pause_update = False
+
         if key == arcade.key.N:
-            self.algo_step(Algo.NONE)
-            print(f'\n\n')
+            self.algo_step(Algo.TAKE_SHORTCUTS)
+
+        if key == arcade.key.P:
+            image = arcade.draw_commands.get_image(x=0, y=0, width=None, height=None)
+            image.save('screenshot.png', 'PNG')
 
         dirs = {
              arcade.key.W : Dir.Up,
@@ -115,41 +134,21 @@ class SnakeGame(arcade.Window):
              arcade.key.S: Dir.Down,
              arcade.key.D: Dir.Right
         }
-        self.m_head_dir = dirs.get(key)
-        if self.m_head_dir is not None:
+        dir = dirs.get(key)
+        if dir is not None:
+            self.m_head_dir = dir
             self.m_snake, self.m_food = snake.move(self.m_snake, self.m_head_dir, self.m_food, self.m_all_nodes,
                                         self.m_seed, self.m_node_shape)
             if (self.m_snake.size == 0 or self.m_food == -1):
                 self.setup()
 
-    def draw_square(self, square, color, square_size, w):
-        '''
-        draw a square on the screen
-
-        Parameters
-        ----------
-        square - node id of the square to be draw.
-
-        color : string
-            color of the square
-
-        square_size : integer
-            the size of the square in pixels
-
-        w : integer
-            number of squares in the width dimension
-        '''
-        x = snake.offset_pos(square % w, square_size)
-        y = self.height - snake.offset_pos(square / w, square_size)
-        arcade.draw_rectangle_filled(x, y, square_size, square_size, color)
-
-    def draw_snake(self, snake, square_size, w):
+    def draw_snake(self, snake_arr, square_size, w):
         '''
         draw a snake on the screen
 
         Parameters
         ----------
-        snake : array
+        snake_arr : array
             array of node ids occupied by the snake
 
         square_size : integer
@@ -159,40 +158,24 @@ class SnakeGame(arcade.Window):
             number of squares in the width dimension
         '''
 
-        snake_len = len(snake)
+        snake_len = len(snake_arr)
+        shape = self.m_node_shape
         for i in range(snake_len):
             j = snake_len - 1 - i
-            color = arcade.color.AIR_SUPERIORITY_BLUE if j > 0 else arcade.color.RADICAL_RED
+            square = snake_arr[j]
+            coords = du.get_coords(square, square_size, w, self.height)
+
+            color = arcade.color.UFO_GREEN
             if j == 0:
-                self.draw_triangle(snake[j], color, self.m_head_dir, square_size, w)
+                du.draw_triangle(coords, self.m_head_dir, square_size, arcade.color.RED_DEVIL)
+            elif j == snake_len -1:
+                dir = nav.get_dir_between(square, snake_arr[j-1], shape)
+                du.draw_segment(coords, dir, dir, square_size, color)
             else:
-                self.draw_square(snake[j], color, square_size, w)
+                prev_dir = nav.get_dir_between(square, snake_arr[j-1], shape)
+                next_dir = nav.get_dir_between(square, snake_arr[j+1], shape)
+                du.draw_segment(coords, prev_dir, next_dir, square_size, color)
 
-    def draw_triangle(self, square, color, dir, square_size, w):
-        coords = self.get_triangle_coords(square, dir, square_size, w)
-        arcade.draw_triangle_filled(coords[0], coords[1], coords[2],
-                                    coords[3], coords[4], coords[5], color)
-
-    def get_triangle_coords(self, square, dir, square_size, w):
-        x = snake.offset_pos(square % w, square_size)
-        y = self.height - snake.offset_pos(square / w, square_size)
-
-        half = square_size * 0.5
-
-        offsets = {
-            Dir.Down : [-half, half, 0, -half, half, half],
-            Dir.Up: [-half, -half, 0, half, half, -half],
-            Dir.Right: [-half, -half, half, 0, -half, half],
-            Dir.Left: [half, -half, -half, 0, half, half],
-        }
-        offset = offsets.get(dir)
-        coords = []
-        for i in range(len(offset)):
-            if i % 2 == 0:
-                coords.append(x + offset[i])
-            else:
-                coords.append(y + offset[i])
-        return coords
 
     def algo_step(self, algo):
         dir = None
@@ -203,11 +186,12 @@ class SnakeGame(arcade.Window):
             dir = move_algo.fint_next_shortcut_dir(self.m_snake, self.m_food, self.m_path, self.m_node_shape)
 
         if dir is not None:
-            m_head_dir = dir
+            self.m_head_dir = dir
             self.m_snake, self.m_food = snake.move(self.m_snake, self.m_head_dir, self.m_food, self.m_all_nodes,
                                                    self.m_seed, self.m_node_shape)
             if (self.m_snake.size == 0 or self.m_food == -1):
-                self.setup()
+                arcade.close_window()
+                #self.setup()
 
     m_node_shape = nav.create_pos()
     '''
@@ -248,4 +232,9 @@ class SnakeGame(arcade.Window):
     m_head_dir = Dir.Up
     '''
     m_head_dir - snake head direction
+    '''
+
+    m_pause_update = True
+    '''
+    m_pause_update - flag for pausing the update loop
     '''

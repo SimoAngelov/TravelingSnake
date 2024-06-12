@@ -208,7 +208,11 @@ def get_node_id(pos, shape):
     -------
     node_id : integer
         the id of the node at the specified position
+        If pos is out of the bounds of shape, None is returned
     '''
+    if pos[Axis.X] < 0 or pos[Axis.X] >= shape[Dmn.W] or pos[Axis.Y] < 0 or pos[Axis.Y] >= shape[Dmn.H]:
+        return None
+
     node_id = np.int64(pos[Axis.X] + pos[Axis.Y] * shape[Dmn.W])
     return node_id
 
@@ -231,6 +235,7 @@ def get_next_node_id(node_id, dir, shape):
     -------
     next_node_id : integer
         the next node id in the direction of the current one
+        If next_pos is out of the bounds of shape, None is returned
     '''
     curr_pos = get_node_pos(node_id, shape)
     next_pos = get_next_pos(curr_pos, dir)
