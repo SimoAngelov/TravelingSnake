@@ -26,7 +26,8 @@ class SnakeGame(arcade.Window):
     Main application class.
     """
 
-    def __init__(self, title, fps, node_shape, node_size, seed, is_show_path_1d = False):
+    def __init__(self, title, fps, node_shape, node_size, seed = None,
+                 is_show_path = False, is_pause_update = False):
         '''
         initialize the SnakeGame class
 
@@ -46,10 +47,18 @@ class SnakeGame(arcade.Window):
 
         seed : integer, optional
             used to seed the default rng, by default is none
+
+        is_show_path : bool, optional
+            whether to show the hamiltonian path, by default is false
+
+        is_pause_update : bool, optional
+            whether to pause the update loop, by default is false
         '''
         self.m_node_shape = nav.create_pos(node_shape[Dmn.H], node_shape[Dmn.W])
         self.m_node_size = node_size
         self.m_seed = seed
+        self.m_is_show_path = is_show_path
+        self.m_is_pause_update = is_pause_update
 
         screen_width = np.int64(self.m_node_shape[Dmn.W] * self.m_node_size)
         screen_height = np.int64(self.m_node_shape[Dmn.H] * self.m_node_size)
@@ -91,8 +100,8 @@ class SnakeGame(arcade.Window):
         self.draw_snake(self.m_snake, self.m_node_size, self.m_node_shape[Dmn.W])
         du.draw_cirle(self.m_food, self.m_node_size, self.m_node_shape[Dmn.W], self.height, arcade.color.RED_VIOLET)
 
-        show_path = False
-        if show_path:
+        # Draw the hamiltonian path
+        if self.m_is_show_path:
             for i in range(self.m_path.size):
                 coords = du.get_coords(i, self.m_node_size, self.m_node_shape[Dmn.W], self.height)
                 width = self.m_node_size
@@ -111,20 +120,20 @@ class SnakeGame(arcade.Window):
         Normally, you'll call update() on the sprite lists that
         need it.
         """
-        if self.m_pause_update:
+        if self.m_is_pause_update:
             return
         algo = Algo.TAKE_SHORTCUTS
         self.algo_step(algo)
 
 
     def on_key_press(self, key, key_modifiers):
-        if key == arcade.key.G:
-            self.m_pause_update = False
+        if key == arcade.key.P:
+            self.m_is_pause_update = not self.m_is_pause_update
 
         if key == arcade.key.N:
             self.algo_step(Algo.TAKE_SHORTCUTS)
 
-        if key == arcade.key.P:
+        if key == arcade.key.G:
             image = arcade.draw_commands.get_image(x=0, y=0, width=None, height=None)
             image.save('screenshot.png', 'PNG')
 
@@ -165,16 +174,15 @@ class SnakeGame(arcade.Window):
             square = snake_arr[j]
             coords = du.get_coords(square, square_size, w, self.height)
 
-            color = arcade.color.UFO_GREEN
             if j == 0:
-                du.draw_triangle(coords, self.m_head_dir, square_size, arcade.color.RED_DEVIL)
+                du.draw_triangle(coords, self.m_head_dir, square_size, arcade.color.ALIZARIN_CRIMSON)
             elif j == snake_len -1:
                 dir = nav.get_dir_between(square, snake_arr[j-1], shape)
-                du.draw_segment(coords, dir, dir, square_size, color)
+                du.draw_segment(coords, dir, dir, square_size, arcade.color.GRANNY_SMITH_APPLE)
             else:
                 prev_dir = nav.get_dir_between(square, snake_arr[j-1], shape)
                 next_dir = nav.get_dir_between(square, snake_arr[j+1], shape)
-                du.draw_segment(coords, prev_dir, next_dir, square_size, color)
+                du.draw_segment(coords, prev_dir, next_dir, square_size, arcade.color.UFO_GREEN)
 
 
     def algo_step(self, algo):
@@ -190,8 +198,7 @@ class SnakeGame(arcade.Window):
             self.m_snake, self.m_food = snake.move(self.m_snake, self.m_head_dir, self.m_food, self.m_all_nodes,
                                                    self.m_seed, self.m_node_shape)
             if (self.m_snake.size == 0 or self.m_food == -1):
-                arcade.close_window()
-                #self.setup()
+                self.setup()
 
     m_node_shape = nav.create_pos()
     '''
@@ -234,7 +241,12 @@ class SnakeGame(arcade.Window):
     m_head_dir - snake head direction
     '''
 
-    m_pause_update = True
+    m_is_pause_update = False
     '''
-    m_pause_update - flag for pausing the update loop
+    m_is_pause_update - flag for pausing the update loop
+    '''
+
+    m_is_show_path = False
+    '''
+    m_is_show_path - should the hamiltonian path be shown
     '''

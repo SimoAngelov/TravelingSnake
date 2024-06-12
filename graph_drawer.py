@@ -238,16 +238,15 @@ def draw_hamilton_example():
                 edges_to_remove.append([(j, i), (j, i + 1)])
     draw_grid_graph("Hamiltonian Cycle with one even dimension", m, n, edges_to_remove, node_size = 300)
 
-def animate_prim_mst(shape, seed, is_html = False, node_size = 100):
-    half_shape = nav.create_pos(shape[Dmn.H] / 2, shape[Dmn.W] / 2)
-    mst, visited, prim_path = hcg.generate_prim_mst(nav.create_pos(-1, -1), nav.create_random_pos(half_shape), half_shape, seed)
+def animate_prim_mst(shape, seed, is_html = False, node_size = 300):
+    mst, mst_edge_order = hcg.generate_prim_mst(shape, seed)
     hamilton_path = hcg.generate_hamilton_cycle(mst, shape)
 
     fig = plt.figure(figsize=[4, 4])
 
     offset = node_size * 10
 
-    frames = len(prim_path)
+    frames = len(mst_edge_order)
 
     h_graph = nx.Graph()
     h_nodes = [x for x in range(len(hamilton_path))]
@@ -257,7 +256,7 @@ def animate_prim_mst(shape, seed, is_html = False, node_size = 100):
     G = nx.Graph()
     prim_pos = {}
 
-    G.add_nodes_from(prim_path)
+    G.add_nodes_from([x for x in range(len(mst))])
 
     p_i = 0
     for node in h_nodes:
@@ -267,7 +266,6 @@ def animate_prim_mst(shape, seed, is_html = False, node_size = 100):
             prim_pos[p_i] = (h_pos[node][Axis.X] + offset * 0.5, h_pos[node][Axis.Y] + offset * 0.5)
             p_i += 1
 
-    print(f'prim_pos: {prim_pos}')
     def draw_prim():
         ax = fig.gca()
         x_lim = (shape[Dmn.W]) * offset
@@ -295,7 +293,7 @@ def animate_prim_mst(shape, seed, is_html = False, node_size = 100):
     def animate(frame):
         fig.clear()
         if frame > 0:
-            G.add_edge(prim_path[frame - 1], prim_path[frame])
+            G.add_edge(mst_edge_order[frame, Axis.X], mst_edge_order[frame, Axis.Y])
         draw_prim()
         return G
 

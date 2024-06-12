@@ -23,9 +23,15 @@ def generate_path(shape, seed = 0, is_print_mst = False):
     array
         an array which is the hamiltonian path. The values are node ids.
         If the shape can't produce a valid hamiltonian path, an empty array is returned.
+
+    Raises
+    ------
+    ValueError
+        if neither of the shape's dimensions is even
     '''
     # The shape doesn't contain a valid hamiltonian cycle
     if shape[Dmn.W] * shape[Dmn.H] % 2 != 0 or shape[Dmn.W] == 1 or shape[Dmn.H] == 1:
+        raise ValueError(f'failed to generate path! shape: {shape} is not even in any dimension!')
         return np.empty(shape = 0, dtype=np.int64)
 
     # The shape has an odd dimension, so Prim's MST can't be used in this case
@@ -34,10 +40,10 @@ def generate_path(shape, seed = 0, is_print_mst = False):
 
     # Use Prim's MST to generate an mst and a hamiltonian cycle
     half_shape = nav.create_pos(shape[Dmn.H] / 2, shape[Dmn.W] / 2)
-    mst, visited, prim_path = generate_prim_mst(nav.create_pos(-1, -1), nav.create_random_pos(half_shape), half_shape, seed)
+    mst, mst_edge_order = generate_prim_mst(shape, seed)
 
     if is_print_mst:
-        print(f'mst: {mst},\nprim_path: {prim_path}')
+        print(f'mst: {mst}')
         dirs = nav.get_dir_array()
         for i in range(mst.size):
             res = ''
@@ -45,95 +51,100 @@ def generate_path(shape, seed = 0, is_print_mst = False):
                 if nav.is_dir(mst[i], dir):
                     res = f'{res}, {dir}'
             print(f'edge[{i}]: {res}')
+        print(f'mst_edge_order:\n{mst_edge_order}')
     return generate_hamilton_cycle(mst, shape)
 
-def generate_prim_mst(prev_pos, pos, shape, seed, mst = None, visited = None, prim_path = None):
+def generate_prim_mst(shape, seed = None):
     '''
-    recursively defined method to generate a minimum spanning tree, using Prim's algorithm
+    generate a minimum spanning tree (MST), using Prim's algorithm.
+    Randomized choice is used to substitute the edge weights.
+    The constructed MST is half the size of shape and is used as a
+    guide to construct the Hamiltonian Cycle around the node grid.
 
     Parameters
     ----------
-    prev_pos : array
-        previous mst node position from which to connect an edge
-
-    pos : array
-        current node position to be added to the mst and connect and edge to
-
     shape : array
-        node shape HxW
+        node shape of the original grid for which to createHxW
 
     seed : integer, optional
         used to seed the default rng, by default is none
 
-    mst : array, optional
-        minimum spanning tree for which to add a node,
-        indices are nodes, values are direction masks,
-        default is None
-
-    visited : array, optional
-        keep trach of which node was visited, by default is None
-
-    prim_path : list, optional
-        contains the path constructed by the mst, by default is None
-
     Returns
     -------
-    Tuple
-        a tuple of the current mst, he visited nodes and the prim path
+    (mst, edge_order) : tuple
+        a tuple of the generated mst and the order in which the edges were created.
+        The MST or minimum spanning tree is an array for which the
+        indices are nodes, values are direction masks,
+
     '''
-    if mst is None:
-        mst = np.zeros(shape[Dmn.W] * shape[Dmn.H], dtype = np.int8)
-
-    if visited is None:
-        visited = np.zeros(len(mst), dtype = bool)
-
-    if pos[Axis.X] < 0 or pos[Axis.Y] < 0 or pos[Axis.X] >= shape[Dmn.W] or pos[Axis.Y] >= shape[Dmn.H]:
-        return (mst, visited, prim_path)
-
-    curr_node_id = nav.get_node_id(pos, shape)
-
-    if visited[curr_node_id]:
-        return (mst, visited, prim_path)
-    visited[curr_node_id] = True
-
-    # Remove wall between fromX and fromY
-    if prev_pos[Axis.X] != -1:
-        prev_node_id = nav.get_node_id(prev_pos, shape)
-        if prev_pos[Axis.X] < pos[Axis.X]:
-            mst[prev_node_id] = nav.set_dir(mst[prev_node_id], Dir.Right)
-            mst[curr_node_id] = nav.set_dir(mst[curr_node_id], Dir.Left)
-        elif prev_pos[Axis.X] > pos[Axis.X]:
-            mst[prev_node_id] = nav.set_dir(mst[prev_node_id], Dir.Left)
-            mst[curr_node_id] = nav.set_dir(mst[curr_node_id], Dir.Right)
-        elif prev_pos[Axis.Y] < pos[Axis.Y]:
-            mst[prev_node_id] = nav.set_dir(mst[prev_node_id], Dir.Down)
-            mst[curr_node_id] = nav.set_dir(mst[curr_node_id], Dir.Up)
-        elif prev_pos[Axis.Y] > pos[Axis.Y]:
-            mst[prev_node_id] = nav.set_dir(mst[prev_node_id], Dir.Up)
-            mst[curr_node_id] = nav.set_dir(mst[curr_node_id], Dir.Down)
-        if prim_path is None:
-            prim_path = [prev_node_id]
-        prim_path.append(curr_node_id)
-
-    # We want to vist the four connected nodes randomly,
-    # so we just visit two randomly (maybe already visited)
-    # then just visit them all non-randomly. It's okay to
-    # visit the same node twice.
-    dir_array = nav.get_dir_array(start = Dir.Right)
     seed_seq = np.random.SeedSequence(entropy = seed)
     rng = np.random.default_rng(seed_seq)
+    prim_shape = nav.create_pos(shape[Dmn.H] / 2, shape[Dmn.W] / 2)
 
-    for i in range(Axis.COUNT):
-        dir = rng.choice(dir_array)
-        next_pos = nav.get_next_pos(pos, dir)
-        mst, visited, prim_path = generate_prim_mst(pos, next_pos, shape, seed, mst, visited, prim_path)
+    size = prim_shape[Dmn.W] * prim_shape[Dmn.H]
+    # Initialize the MST as an array. The indices are node ids, the values are bit masks
+    # that encode the directions to the node's neighbors.
+    mst = np.zeros(size, dtype = np.int8)
 
-    for i in range(len(dir_array)):
-        dir = dir_array[i]
-        next_pos = nav.get_next_pos(pos, dir)
-        mst, visited, prim_path = generate_prim_mst(pos, next_pos, shape, seed, mst, visited, prim_path)
+    # Keep track of the order the edges were formed
+    edge_order = np.zeros(shape = (size -1, Axis.COUNT), dtype = np.int64)
 
-    return (mst, visited, prim_path)
+    # Create an adjacency list for each node in the grid
+    # The indices of the array are node ids. The values of the array are dictionaries with
+    # keys: neighbor node ids,
+    # values: direction of the neighbor from the node.
+    adjacency_arr = np.array([{} for _ in range(size)])
+    dir_array = nav.get_dir_array()
+    for node_id in range(size):
+            for dir_id in range(len(dir_array)):
+                dir = dir_array[dir_id]
+                neighbor_id = nav.get_next_node_id(node_id, dir, prim_shape)
+                if neighbor_id is not None:
+                    adjacency_arr[node_id][neighbor_id] = dir
+
+    # Choose a random node to be the start of the MST
+    start = rng.integers(0, size)
+    # Create a list of all fringe nodes that currently neighbor the MST.
+    fringes = list(adjacency_arr[start].keys())
+    # Create a list of all nodes that have already been visited and are part of the MST
+    visited = [start]
+
+    # Visit all nodes in the graph
+    i = 0
+    while (len(visited) < size):
+        # Pick a random node from the fringes as a candidate to be added to the MST
+        fringe = rng.choice(fringes)
+        candidates = []
+        new_fringes = []
+
+        # Retrieve all the neighbors of the fringe node
+        neighbors = adjacency_arr[fringe].keys()
+        for neighbor in neighbors:
+            # If the neighbor has already been visited and is part of the MST, add it as possible edge
+            if neighbor in visited:
+                candidates.append(neighbor)
+            # If not, add it as a part of the new fringes, since it will neighbor the MST when the edge is formed
+            elif neighbor not in fringes:
+                new_fringes.append(neighbor)
+
+        # Choose a random candidate from the available ones
+        candidate = rng.choice(candidates)
+
+        # Add the fringe node to the list of visited ones
+        visited.append(fringe)
+
+        # Update the MST with the connections between the two nodes
+        mst[fringe] = nav.set_dir(mst[fringe], adjacency_arr[fringe][candidate])
+        mst[candidate] = nav.set_dir(mst[candidate], adjacency_arr[candidate][fringe])
+        edge_order[i, Axis.X] = fringe
+        edge_order[i, Axis.Y] = candidate
+
+        # Remove the fringe node from the fringes and add it to the new neighbors that border the MST
+        fringes.remove(fringe)
+        fringes += new_fringes
+        i += 1
+
+    return (mst, edge_order)
 
 def generate_hamilton_cycle(mst, shape):
     '''
@@ -151,8 +162,16 @@ def generate_hamilton_cycle(mst, shape):
     -------
     array
         array which is the hamiltonian cycle from the specified mst. The values are indices in the path
+
+    Raises
+    ------
+    ValueError
+        if neither of the shape's dimensions is even
     '''
     hamilton_cycle = np.zeros(np.int64(shape[Dmn.W] * shape[Dmn.H]), dtype=np.int64)
+    if len(hamilton_cycle) % 2 != 0:
+        raise ValueError(f'failed to generate_hamilton_cycle! shape: {shape} is not even in any dimension!')
+
     def can_go(dir, pos):
         '''
         query whether we can move from the current position in the desired direction
@@ -324,8 +343,6 @@ def get_turning_points_odd_h(w, h, get_id):
         if i < w - 1:
             turning_points[get_id(i, y2)] = Dir.Down if switch else Dir.Up
             switch = not switch
-
-        print(f'i -> {i}, y1: {y1}, y2: {y2}, id_1: {get_id(i, y1)}, id_2: {get_id(i, y2)}')
     return turning_points
 
 
@@ -354,7 +371,6 @@ def generate_path_with_odd_dimension(shape):
     elif w % 2 != 0:
         turning_points = get_turning_points_odd_w(w, h, get_id)
 
-    print(f'turning_points: {turning_points}')
     dir = Dir.Right
     pos = nav.create_pos()
     for i in range(len(path)):
