@@ -10,7 +10,7 @@ def generate_path(shape, seed = 0, is_print_mst = False):
     Parameters
     ----------
     shape : array
-        node shape HxW - number of nodes in the height and width dimensions
+        node shape HxW
 
     seed : integer, optional
         used to seed the default rng, by default is none
@@ -156,7 +156,7 @@ def generate_hamilton_cycle(mst, shape):
         mininum spanning tree from which to construct the hamiltonian cycle
 
     shape : array
-        node shape HxW - number of nodes in the height and width dimensions
+        node shape HxW
 
     Returns
     -------
@@ -273,7 +273,7 @@ def set_path_square(path, path_square, pos, shape):
         node position at which to set the square
 
     shape : array
-        node shape HxW - number of nodes in the height and width dimensions
+        node shape HxW
     '''
     node_id = nav.get_node_id(pos, shape)
     if (path[node_id] == 0):
@@ -353,7 +353,7 @@ def generate_path_with_odd_dimension(shape):
     Parameters
     ----------
     shape : array
-        node shape HxW - number of nodes in the height and width dimensions
+        node shape HxW
 
     Returns
     -------

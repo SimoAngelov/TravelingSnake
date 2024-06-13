@@ -166,7 +166,8 @@ def create_path_directions(path, shape):
 
 def set_path_dir_index(snake_head, path):
     '''
-    set the path direction index based on the head of the snake
+    set the path direction index based on the head of the snake.
+    Reset directions to None
 
     Parameters
     ----------
@@ -178,3 +179,4 @@ def set_path_dir_index(snake_head, path):
     '''
     global directions, dir_index
     dir_index = path[snake_head]
+    directions = None

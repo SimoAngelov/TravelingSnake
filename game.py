@@ -8,6 +8,7 @@ import hamilton_cycle_generator as hcg
 import nav
 from nav import Dir, Axis, Dmn
 import snake
+from snake import SnakeStatus
 import move_algo
 from move_algo import Algo
 
@@ -20,7 +21,8 @@ class SnakeGame(arcade.Window):
 
     def __init__(self, title, fps, node_shape, node_size, seed = None,
                  is_show_path = False, is_pause_update = False,
-                 is_draw_flat_path = False):
+                 is_draw_flat_path = False,
+                 is_print_path = False):
         '''
         initialize the SnakeGame class
 
@@ -75,14 +77,15 @@ class SnakeGame(arcade.Window):
         # If you have sprite lists, you should create them here,
         # and set them to None
 
-        self.m_path = hcg.generate_path(self.m_node_shape, self.m_seed, True)
-        row = ""
-        for i in range(len(self.m_path)):
-            row = f'{row}\t{self.m_path[i]}'
-            if np.int64(i % self.m_node_shape[Dmn.W]) == (self.m_node_shape[Dmn.W] - 1):
-                print(row)
-                row = ""
-        print(f'\n\npath:\n{self.m_path}')
+        self.m_path = hcg.generate_path(self.m_node_shape, self.m_seed, is_print_path)
+        if is_print_path:
+            row = ""
+            for i in range(len(self.m_path)):
+                row = f'{row}\t{self.m_path[i]}'
+                if np.int64(i % self.m_node_shape[Dmn.W]) == (self.m_node_shape[Dmn.W] - 1):
+                    print(row)
+                    row = ""
+            print(f'\n\npath:\n{self.m_path}')
         if is_show_path or is_draw_flat_path:
             self.m_path_lists = du.create_path_lists(self.m_path, self.m_node_size, self.m_node_shape,
                                                      self.m_grid_size[Dmn.W], self.m_grid_size[Dmn.H],
@@ -94,7 +97,7 @@ class SnakeGame(arcade.Window):
     def setup(self):
         """ Set up the game variables. Call to re-start the game. """
         self.m_all_nodes = np.arange(self.m_node_shape[Dmn.W] * self.m_node_shape[Dmn.H])
-        self.m_snake = np.random.randint(self.m_node_shape[Dmn.W] * self.m_node_shape[Dmn.H], size = 1)
+        self.m_snake = np.random.randint(len(self.m_all_nodes), size = 1)
         self.m_food = snake.create_food(self.m_snake, self.m_all_nodes, self.m_seed)
         move_algo.set_path_dir_index(self.m_snake[0], self.m_path)
 
@@ -169,6 +172,11 @@ class SnakeGame(arcade.Window):
         ----------
         algo : Algo
             algorithm type for which to make a step
+
+        Returns
+        -------
+        status : SnakeStatus
+            the current status of the snake
         '''
         dir = None
 
@@ -177,8 +185,10 @@ class SnakeGame(arcade.Window):
         elif algo is Algo.TAKE_SHORTCUTS:
             dir = move_algo.fint_next_shortcut_dir(self.m_snake, self.m_food, self.m_path, self.m_node_shape)
 
+        status = SnakeStatus.LOST
         if dir is not None:
-            self.move_snake(dir)
+            status = self.move_snake(dir)
+        return status
 
     def move_snake(self, dir):
         '''
@@ -188,13 +198,20 @@ class SnakeGame(arcade.Window):
         ----------
         dir : Dir
             direction in which to move the snake
+
+        Returns
+        -------
+        status : SnakeStatus
+            the current status of the snake
         '''
         self.m_head_dir = dir
-        self.m_snake, self.m_food = snake.move(self.m_snake, self.m_head_dir, self.m_food, self.m_all_nodes,
-                                        self.m_seed, self.m_node_shape)
+        self.m_snake, self.m_food, status = snake.move(self.m_snake, self.m_head_dir,
+                                                       self.m_food, self.m_all_nodes,
+                                                       self.m_seed, self.m_node_shape)
         self.recreate_lists()
-        if (self.m_snake.size == 0 or self.m_food == -1):
+        if status in [SnakeStatus.LOST, SnakeStatus.WON]:
             self.setup()
+        return status
 
     def recreate_lists(self):
         '''

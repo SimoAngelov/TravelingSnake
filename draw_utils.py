@@ -276,7 +276,7 @@ def create_snake_list(snake_arr, snake_head_dir : Dir, node_size, node_shape, sc
     Raises
     ------
     TypeError
-        if snake_head_dirir isn't of type Dir
+        if snake_head_dir isn't of type Dir
     '''
     if not isinstance(snake_head_dir, Dir):
         raise TypeError("snake_head_dir: {snake_head_dir} isn't of type Dir")

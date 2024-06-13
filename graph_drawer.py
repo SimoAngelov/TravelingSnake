@@ -292,7 +292,7 @@ def animate_prim_mst(shape, seed, is_html = False, node_size = 300):
 
     def animate(frame):
         fig.clear()
-        if frame > 0:
+        if frame < len(mst_edge_order):
             G.add_edge(mst_edge_order[frame, Axis.X], mst_edge_order[frame, Axis.Y])
         draw_prim()
         return G
