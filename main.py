@@ -20,7 +20,7 @@ SIM_MODE = True # run simulations for 50 games by increasing the node_shape
 SIM_PARAMS = {
     "seed_count" : 10,
     "games_per_seed" : 10,
-    "node_shapes" : [[6, 6], [17, 14], [24, 37]]
+    "node_shapes" : [[6, 6]]
 }
 def main():
     """ Main function """
@@ -30,7 +30,7 @@ def main():
         snake_game.setup()
         arcade.run()
     else:
-        snake.run_simulation(SIM_PARAMS, 'images/simulation.json')
+        snake.run_simulation(SIM_PARAMS, 'data/simulation.json')
 
 
 if __name__ == "__main__":

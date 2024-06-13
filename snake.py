@@ -147,16 +147,17 @@ def run_simulation(sim_params, save_path):
     results["data"] = {}
     for seed in seeds:
         for shape in shapes:
-                results["data"][f'shape_{shape[Dmn.H]}x{shape[Dmn.W]}'] = {}
+                shape_key = f'shape_{shape[Dmn.H]}x{shape[Dmn.W]}'
+                results["data"][shape_key] = {}
                 total_size = shape[Dmn.H] * shape[Dmn.W]
                 for game in range(games_per_seed):
                     algos = [Algo.FOLLOW_PATH, Algo.TAKE_SHORTCUTS]
                     for algo in algos:
-                        print(f'test shape[{shape}]')
+                        moves_key = f'seed_{seed}_algo_{algo}_game_{game}'
+                        print(f'test shape_key[{shape_key}], moves_key[{moves_key}]')
                         moves = run_test(shape, algo, seed)
-                        results["data"][f'shape_{shape[Dmn.H]}x{shape[Dmn.W]}'][f'seed_{seed}_algo_{algo}_game_{game}'] = moves.tolist()
-                        results
-                        #print(f'seed[{seed}], shape[{shape}], algo[{algo}], moves: {moves}')
+                        results["data"][shape_key][moves_key] = moves.tolist()
+                        print(f'results -> shape_key[{shape_key}], moves_key[{moves_key}], moves: {moves}')
 
     # Save results to json file
     json_object = json.dumps(results, indent=4)
