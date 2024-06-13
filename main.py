@@ -6,17 +6,19 @@ import numpy as np
 
 SCREEN_TITLE = "Traveling Snake"
 
-NODE_SIZE = 20
-NODE_SHAPE = [10, 10]
-FPS = 120
-SEED = 7
-IS_SHOW_PATH = False
-IS_PAUSE_UPDATE = False
+# Configuration parameters
+NODE_SIZE = 30 # size of a node square in pixels
+NODE_SHAPE = [6, 6] # HxW - number of nodes in the height and width dimensions
+FPS = 120 # application framerate
+SEED = 7 # seed for rng
+IS_SHOW_PATH = False # whether to show the hamilton path in a grid
+IS_PAUSE_UPDATE = False # whether to pause the update loop
+IS_DRAW_FLAT_PATH = False # whether to display the flat hamiltonian path below the grid
 
 def main():
     """ Main function """
     snake_game = SnakeGame(SCREEN_TITLE, FPS, NODE_SHAPE, NODE_SIZE, SEED, IS_SHOW_PATH,
-                           IS_PAUSE_UPDATE)
+                           IS_PAUSE_UPDATE, IS_DRAW_FLAT_PATH)
     snake_game.setup()
     arcade.run()
 

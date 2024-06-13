@@ -1,21 +1,13 @@
 
 import arcade
-import arcade.key
-import arcade.key
-import arcade.key
-import arcade.key
-import arcade.key
-import arcade.key
 import numpy as np
+import timeit
+
 from enum import IntEnum
-
 import hamilton_cycle_generator as hcg
-
 import nav
 from nav import Dir, Axis, Dmn
-
 import snake
-
 import move_algo
 from move_algo import Algo
 
@@ -27,7 +19,8 @@ class SnakeGame(arcade.Window):
     """
 
     def __init__(self, title, fps, node_shape, node_size, seed = None,
-                 is_show_path = False, is_pause_update = False):
+                 is_show_path = False, is_pause_update = False,
+                 is_draw_flat_path = False):
         '''
         initialize the SnakeGame class
 
@@ -40,7 +33,7 @@ class SnakeGame(arcade.Window):
             frames per second of the application
 
         node_shape : list
-            node shape HxW
+            node shape HxW - number of nodes in the height and width dimensions
 
         node_size : integer
             size of the node in pixels
@@ -53,6 +46,9 @@ class SnakeGame(arcade.Window):
 
         is_pause_update : bool, optional
             whether to pause the update loop, by default is false
+
+        is_draw_flat_path : bool, optional
+            whether to draw the hamiltonian path flat below the grid
         '''
         self.m_node_shape = nav.create_pos(node_shape[Dmn.H], node_shape[Dmn.W])
         self.m_node_size = node_size
@@ -60,8 +56,19 @@ class SnakeGame(arcade.Window):
         self.m_is_show_path = is_show_path
         self.m_is_pause_update = is_pause_update
 
-        screen_width = np.int64(self.m_node_shape[Dmn.W] * self.m_node_size)
-        screen_height = np.int64(self.m_node_shape[Dmn.H] * self.m_node_size)
+        # Configure screen size
+        self.m_grid_size[Dmn.W] = np.int64(self.m_node_shape[Dmn.W] * self.m_node_size)
+        self.m_grid_size[Dmn.H] = np.int64(self.m_node_shape[Dmn.H] * self.m_node_size)
+
+        screen_width = self.m_grid_size[Dmn.W]
+        screen_height = self.m_grid_size[Dmn.H]
+        if is_draw_flat_path:
+            total_nodes = self.m_node_shape[Dmn.W] * self.m_node_shape[Dmn.H]
+            screen_width = np.int64(total_nodes * self.m_node_size)
+            screen_height = np.int64((self.m_node_shape[Dmn.H] + 2) * self.m_node_size)
+            self.m_grid_offset = nav.create_pos(x = (screen_width - self.m_grid_size[Dmn.W]) * 0.5,
+                                                y = screen_height - self.m_grid_size[Dmn.H])
+
         super().__init__(screen_width, screen_height, title, update_rate=1/fps)
 
         arcade.set_background_color(arcade.color.BLACK)
@@ -76,6 +83,12 @@ class SnakeGame(arcade.Window):
                 print(row)
                 row = ""
         print(f'\n\npath:\n{self.m_path}')
+        if is_show_path or is_draw_flat_path:
+            self.m_path_lists = du.create_path_lists(self.m_path, self.m_node_size, self.m_node_shape,
+                                                     self.m_grid_size[Dmn.W], self.m_grid_size[Dmn.H],
+                                                     offset = self.m_grid_offset)
+            if is_draw_flat_path:
+                self.m_flat_path_lists = du.create_flat_path_lists(self.m_path, self.m_node_size, self.m_node_shape)
         self.setup()
 
     def setup(self):
@@ -85,6 +98,7 @@ class SnakeGame(arcade.Window):
         self.m_food = snake.create_food(self.m_snake, self.m_all_nodes, self.m_seed)
         move_algo.set_path_dir_index(self.m_snake[0], self.m_path)
 
+        self.recreate_lists()
 
     def on_draw(self):
         #arcade.set_window(self._window)
@@ -97,22 +111,21 @@ class SnakeGame(arcade.Window):
         self.clear()
 
         # Call draw() on all your sprite lists below
-        self.draw_snake(self.m_snake, self.m_node_size, self.m_node_shape[Dmn.W])
-        du.draw_cirle(self.m_food, self.m_node_size, self.m_node_shape[Dmn.W], self.height, arcade.color.RED_VIOLET)
+        self.m_snake_list.draw()
 
         # Draw the hamiltonian path
-        if self.m_is_show_path:
-            for i in range(self.m_path.size):
-                coords = du.get_coords(i, self.m_node_size, self.m_node_shape[Dmn.W], self.height)
-                width = self.m_node_size
-                arcade.draw_text(self.m_path[i], coords[Axis.X] - width * 0.5, coords[Axis.Y], font_size = 10, align="center", width=width)
+        if self.m_path_lists is not None:
+            for list in self.m_path_lists:
+                list.draw()
 
-            for i in range(self.m_node_shape[Dmn.H] + 1):
-                y = i * self.m_node_size
-                arcade.draw_line(0, y, self.width, y, arcade.color.WHITE)
-            for i in range(self.m_node_shape[Dmn.W] + 1):
-                x = i * self.m_node_size
-                arcade.draw_line(x, 0, x, self.height, arcade.color.WHITE)
+        # Draw flattened snake:
+        if self.m_flat_snake_list is not None:
+            self.m_flat_snake_list.draw()
+
+        # Draw flattened path
+        if self.m_flat_path_lists is not None:
+            for list in self.m_flat_path_lists:
+                list.draw()
 
     def on_update(self, delta_time):
         """
@@ -145,48 +158,18 @@ class SnakeGame(arcade.Window):
         }
         dir = dirs.get(key)
         if dir is not None:
-            self.m_head_dir = dir
-            self.m_snake, self.m_food = snake.move(self.m_snake, self.m_head_dir, self.m_food, self.m_all_nodes,
-                                        self.m_seed, self.m_node_shape)
-            if (self.m_snake.size == 0 or self.m_food == -1):
-                self.setup()
+            self.move_snake(dir)
 
-    def draw_snake(self, snake_arr, square_size, w):
+
+    def algo_step(self, algo : Algo):
         '''
-        draw a snake on the screen
+        make a step for the specified algorithm
 
         Parameters
         ----------
-        snake_arr : array
-            array of node ids occupied by the snake
-
-        square_size : integer
-            the size of a square in pixels
-
-        w : integer
-            number of squares in the width dimension
+        algo : Algo
+            algorithm type for which to make a step
         '''
-
-        snake_len = len(snake_arr)
-        shape = self.m_node_shape
-        for i in range(snake_len):
-            j = snake_len - 1 - i
-            square = snake_arr[j]
-            coords = du.get_coords(square, square_size, w, self.height)
-
-            color = arcade.color.ALIZARIN_CRIMSON if j == 0 else arcade.color.UFO_GREEN
-            if j == 0:
-                du.draw_triangle(coords, self.m_head_dir, square_size, color)
-            elif j == snake_len -1:
-                dir = nav.get_dir_between(square, snake_arr[j-1], shape)
-                du.draw_tail(coords, dir, square_size, color)
-            else:
-                prev_dir = nav.get_dir_between(square, snake_arr[j-1], shape)
-                next_dir = nav.get_dir_between(square, snake_arr[j+1], shape)
-                du.draw_segment(coords, prev_dir, next_dir, square_size, color)
-
-
-    def algo_step(self, algo):
         dir = None
 
         if (algo is Algo.FOLLOW_PATH):
@@ -195,11 +178,38 @@ class SnakeGame(arcade.Window):
             dir = move_algo.fint_next_shortcut_dir(self.m_snake, self.m_food, self.m_path, self.m_node_shape)
 
         if dir is not None:
-            self.m_head_dir = dir
-            self.m_snake, self.m_food = snake.move(self.m_snake, self.m_head_dir, self.m_food, self.m_all_nodes,
-                                                   self.m_seed, self.m_node_shape)
-            if (self.m_snake.size == 0 or self.m_food == -1):
-                self.setup()
+            self.move_snake(dir)
+
+    def move_snake(self, dir):
+        '''
+        move the snake in the specified direction
+
+        Parameters
+        ----------
+        dir : Dir
+            direction in which to move the snake
+        '''
+        self.m_head_dir = dir
+        self.m_snake, self.m_food = snake.move(self.m_snake, self.m_head_dir, self.m_food, self.m_all_nodes,
+                                        self.m_seed, self.m_node_shape)
+        self.recreate_lists()
+        if (self.m_snake.size == 0 or self.m_food == -1):
+            self.setup()
+
+    def recreate_lists(self):
+        '''
+        recreate snake and food lists
+        '''
+        self.m_snake_list = du.create_snake_list(self.m_snake, self.m_head_dir, self.m_node_size,
+                                                 self.m_node_shape, self.m_grid_size[Dmn.H],
+                                                 offset = self.m_grid_offset)
+        food_shape = du.create_food(self.m_food, self.m_node_size,
+                                    self.m_node_shape[Dmn.W], self.m_grid_size[Dmn.H])
+        self.m_snake_list.append(food_shape)
+
+        if self.m_flat_path_lists is not None:
+            self.m_flat_snake_list = du.create_flat_snake_list(self.m_snake, self.m_food, self.m_path,
+                                                               self.m_node_size, self.m_node_shape)
 
     m_node_shape = nav.create_pos()
     '''
@@ -247,7 +257,32 @@ class SnakeGame(arcade.Window):
     m_is_pause_update - flag for pausing the update loop
     '''
 
-    m_is_show_path = False
+    m_snake_list = None
     '''
-    m_is_show_path - should the hamiltonian path be shown
+    m_snake_list - snake segment shape list
+    '''
+
+    m_path_lists = None
+    '''
+    m_path_lists - text sprite and grid shape lists for m_path
+    '''
+
+    m_grid_size = nav.create_pos()
+    '''
+    m_grid_size - size of the grid in pixels
+    '''
+
+    m_grid_offset = None
+    '''
+    m_grid_offset - [x, y] grid offset from the bottom-right corner of the screen
+    '''
+
+    m_flat_snake_list = None
+    '''
+    m_flat_snake_list - contain the snake list as a flat row
+    '''
+
+    m_flat_path_lists = None
+    '''
+    m_flat_path_lists - contain the path lists as a flat row
     '''

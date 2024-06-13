@@ -167,6 +167,19 @@ def create_pos(x = 0, y = 0):
     return np.array([x, y], dtype = np.int64)
 
 def create_random_pos(shape):
+    '''
+    create random position
+
+    Parameters
+    ----------
+    shape : array
+        node shape HxW - number of nodes in the height and width dimensions
+
+    Returns
+    ----------
+    array
+        an array with the x, y values
+    '''
     x_rand = np.random.randint(shape[Dmn.W])
     y_rand = np.random.randint(shape[Dmn.H])
     return create_pos(x_rand, y_rand)
@@ -181,7 +194,7 @@ def get_node_pos(id, shape):
         id of the node ot be queried
 
     shape : array
-        node shape WxH
+        node shape HxW - number of nodes in the height and width dimensions
 
     Returns
     -------
@@ -202,7 +215,7 @@ def get_node_id(pos, shape):
         node x,y position
 
     shape : array
-        node shape HxW
+        node shape HxW - number of nodes in the height and width dimensions
 
     Returns
     -------
@@ -229,7 +242,7 @@ def get_next_node_id(node_id, dir, shape):
         direction in which to move from node_id
 
     shape : array
-        node shape HxW
+        node shape HxW - number of nodes in the height and width dimensions
 
     Returns
     -------
@@ -254,7 +267,7 @@ def get_dir_between(start, end, node_shape):
     end : integer
         end node ide
     node_shape : array
-        node shape HxW
+        node shape HxW - number of nodes in the height and width dimensions
 
     Returns
     -------
@@ -285,7 +298,7 @@ def path_distance(start_node, end_node, shape):
         id of the end node
 
     shape : array
-        node shape HxW
+        node shape HxW - number of nodes in the height and width dimensions
 
     Returns
     -------
@@ -306,7 +319,7 @@ def is_out_of_bounds(pos, shape):
         x, y position to be queried
 
     shape : array
-        node shape HxW
+        node shape HxW - number of nodes in the height and width dimensions
 
     Returns
     -------

@@ -30,7 +30,7 @@ def find_next_dir(path, shape):
         snake should follow
 
     shape : array
-        node shape HxW
+        node shape HxW - number of nodes in the height and width dimensions
 
     Returns
     -------
@@ -62,7 +62,7 @@ def fint_next_shortcut_dir(snake, food, path, shape):
         hamilton path the snake should follow
 
     shape : array
-        node shape HxW
+        node shape HxW - number of nodes in the height and width dimensions
 
     Returns
     -------
@@ -141,7 +141,7 @@ def create_path_directions(path, shape):
     path : array
         Hamiltonian path the snake should follow
     shape : array
-        node shape HxW
+        node shape HxW - number of nodes in the height and width dimensions
 
     Returns
     -------
