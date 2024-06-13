@@ -1,3 +1,4 @@
+import arcade.color
 import numpy as np
 import arcade
 from nav import Dir, Axis
@@ -197,3 +198,37 @@ def draw_cirle(node_id, node_size, shape_w, height, color):
     '''
     coords = get_coords(node_id, node_size, shape_w, height)
     arcade.draw_circle_filled(coords[Axis.X], coords[Axis.Y], node_size * 0.5, color)
+
+def draw_tail(coords, dir: Dir, node_size, color):
+    '''
+    draw snake tail segment
+
+    Parameters
+    ----------
+    coords : list
+        [x, y] center coordinates
+
+    dir : Dir
+        direction which the tail is facing
+
+    node_size : integer
+        with and height of a node in pixels
+
+    color : tuple
+        (r, g, b) color of the tail
+    '''
+    half = node_size * 0.5
+    quart = node_size * 0.25
+    dir_offsets = {
+        Dir.Up: ((-quart, half), (-quart, -half,), (0, 0), (quart, -half), (quart, half)),
+        Dir.Down: ((-quart, -half), (-quart, half), (0, 0), (quart, half), (quart, -half)),
+        Dir.Left: ((-half, quart), (half, quart), (0, 0), (half, -quart), (-half, -quart)),
+        Dir.Right: ((half, quart), (-half, quart), (0, 0), (-half, -quart), (half, -quart))
+    }
+    offsets = dir_offsets.get(dir)
+    coords = tuple(coords)
+    tail_coords = ()
+    for offset in offsets:
+        tail_coord = tuple(map(sum, zip(offset, coords)))
+        tail_coords += (tail_coord,)
+    arcade.draw_polygon_filled(tail_coords, color)

@@ -174,15 +174,16 @@ class SnakeGame(arcade.Window):
             square = snake_arr[j]
             coords = du.get_coords(square, square_size, w, self.height)
 
+            color = arcade.color.ALIZARIN_CRIMSON if j == 0 else arcade.color.UFO_GREEN
             if j == 0:
-                du.draw_triangle(coords, self.m_head_dir, square_size, arcade.color.ALIZARIN_CRIMSON)
+                du.draw_triangle(coords, self.m_head_dir, square_size, color)
             elif j == snake_len -1:
                 dir = nav.get_dir_between(square, snake_arr[j-1], shape)
-                du.draw_segment(coords, dir, dir, square_size, arcade.color.GRANNY_SMITH_APPLE)
+                du.draw_tail(coords, dir, square_size, color)
             else:
                 prev_dir = nav.get_dir_between(square, snake_arr[j-1], shape)
                 next_dir = nav.get_dir_between(square, snake_arr[j+1], shape)
-                du.draw_segment(coords, prev_dir, next_dir, square_size, arcade.color.UFO_GREEN)
+                du.draw_segment(coords, prev_dir, next_dir, square_size, color)
 
 
     def algo_step(self, algo):
