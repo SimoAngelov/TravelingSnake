@@ -249,6 +249,23 @@ def draw_hamilton_example():
 
 
 def animate_prim_mst(shape, seed, is_html=False, node_size=300):
+    '''
+
+    Parameters
+    ----------
+    shape : array
+        HxW shape - number of nodes in the height and width dimensions
+
+    seed : integer
+        rng seed used for reproducibility
+
+    is_html : bool
+        whether to display the animation in a notebook context
+
+    node_size : integer, optional
+        size of the node in pixels, by default is 300
+    '''
+    shape = nav.create_pos(shape[Dmn.H], shape[Dmn.W])
     mst, mst_edge_order = hcg.generate_prim_mst(shape, seed)
     hamilton_path = hcg.generate_hamilton_cycle(mst, shape)
 
@@ -309,7 +326,6 @@ def animate_prim_mst(shape, seed, is_html=False, node_size=300):
     if not is_html:
         plt.show()
     return HTML(anim.to_jshtml())
-
 
 def plot_functions(function_array, x_max, y_max, title, x_label, y_label):
     '''
@@ -389,6 +405,14 @@ def get_video(path):
 
 
 def plot_simulation_data(path):
+    '''
+    plot data from the specified simulation
+
+    Parameters
+    ----------
+    path : string
+        simulation.json path
+    '''
     get_key = lambda shape, seed, algo, game: f'shape_{shape[Dmn.H]}x{shape[Dmn.W]}_seed_{seed}_algo_{algo}_game_{game}'
 
     sim_data = pd.read_json(path).to_dict()
@@ -406,16 +430,15 @@ def plot_simulation_data(path):
     data = sim_data["data"]
     moves_full = data[get_key(rand_shape, rand_seed, Algo.FOLLOW_PATH, rand_game)]
     moves_shortcut = data[get_key(rand_shape, rand_seed, Algo.TAKE_SHORTCUTS, rand_game)]
+    total_full = np.sum(moves_full)
+    total_shortcut = np.sum(moves_shortcut)
     xs = np.arange(len(moves_full))
-    plt.bar(xs, moves_full, label="Snake follow full path")
-    plt.bar(xs, moves_shortcut, label="Snake takes shortcut", alpha=0.5)
-    plt.xlabel("Food generated")
+    plt.bar(xs, moves_full, label=f'Snake follows full path and makes {total_full} total moves')
+    plt.bar(xs, moves_shortcut, label=f'Snake takes shortcuts and makes {total_shortcut} total moves', alpha=0.5)
+    plt.xlabel("Pieces of food eaten by the snake")
     plt.ylabel("Moves taken to eat the food")
     plt.title(f'Game of snake for grid {rand_shape[Dmn.H]}x{rand_shape[Dmn.W]}, seed: {rand_seed}')
     ax = plt.gca()
     ax.set_aspect('equal')
     plt.legend()
     plt.show()
-
-
-plot_simulation_data('data/simulation.json')

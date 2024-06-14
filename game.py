@@ -1,9 +1,7 @@
 
 import arcade
 import numpy as np
-import timeit
-
-from enum import IntEnum
+import time
 import hamilton_cycle_generator as hcg
 import nav
 from nav import Dir, Axis, Dmn
@@ -19,7 +17,7 @@ class SnakeGame(arcade.Window):
     Main application class.
     """
 
-    def __init__(self, title, fps, node_shape, node_size, seed = None,
+    def __init__(self, title, fps, node_shape, node_size, algo = Algo.NONE, seed = None,
                  is_show_path = False, is_pause_update = False,
                  is_draw_flat_path = False,
                  is_print_path = False):
@@ -40,6 +38,9 @@ class SnakeGame(arcade.Window):
         node_size : integer
             size of the node in pixels
 
+        algo : Algo
+            algorithm type the snake should follow
+
         seed : integer, optional
             used to seed the default rng, by default is none
 
@@ -54,6 +55,7 @@ class SnakeGame(arcade.Window):
         '''
         self.m_node_shape = nav.create_pos(node_shape[Dmn.H], node_shape[Dmn.W])
         self.m_node_size = node_size
+        self.m_algo = algo
         self.m_seed = seed
         self.m_is_show_path = is_show_path
         self.m_is_pause_update = is_pause_update
@@ -138,8 +140,7 @@ class SnakeGame(arcade.Window):
         """
         if self.m_is_pause_update:
             return
-        algo = Algo.TAKE_SHORTCUTS
-        self.algo_step(algo)
+        self.algo_step(self.m_algo)
 
 
     def on_key_press(self, key, key_modifiers):
@@ -151,7 +152,8 @@ class SnakeGame(arcade.Window):
 
         if key == arcade.key.G:
             image = arcade.draw_commands.get_image(x=0, y=0, width=None, height=None)
-            image.save('screenshot.png', 'PNG')
+            title = f'data/screenshot_{time.time()}.png'
+            image.save(title, 'PNG')
 
         dirs = {
              arcade.key.W : Dir.Up,
@@ -257,6 +259,11 @@ class SnakeGame(arcade.Window):
     m_all_nodes = []
     '''
     m_all_nodes - all node ids on screen
+    '''
+
+    m_algo = Algo.NONE
+    '''
+    m_algo - algorithm the snake should follow
     '''
 
     m_seed = None
