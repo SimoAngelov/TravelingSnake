@@ -1,4 +1,5 @@
 Project for course Math-Concepts-For-Developers 2024
+Link to repo: https://github.com/SimoAngelov/TravelingSnake
 
 TravellingSnake.ipynb is the Jupyter Notebook
 
