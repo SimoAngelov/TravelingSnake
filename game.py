@@ -183,7 +183,7 @@ class SnakeGame(arcade.Window):
         if (algo is Algo.FOLLOW_PATH):
             dir = move_algo.find_next_dir(self.m_path, self.m_node_shape)
         elif algo is Algo.TAKE_SHORTCUTS:
-            dir = move_algo.fint_next_shortcut_dir(self.m_snake, self.m_food, self.m_path, self.m_node_shape)
+            dir = move_algo.find_next_shortcut_dir(self.m_snake, self.m_food, self.m_path, self.m_node_shape)
 
         status = SnakeStatus.LOST
         if dir is not None:

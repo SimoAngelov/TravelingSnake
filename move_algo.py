@@ -4,10 +4,12 @@ from enum import IntEnum
 import nav
 from nav import Axis, Dmn, Dir
 
+
 class Algo(IntEnum):
     FOLLOW_PATH = 0
     TAKE_SHORTCUTS = 1
     NONE = 2
+
 
 directions = None
 '''
@@ -18,6 +20,7 @@ dir_index = np.int64(0)
 '''
 dir_index - current index in the directions array for Algo.FOLLOW_PATH
 '''
+
 
 def find_next_dir(path, shape):
     '''
@@ -45,7 +48,7 @@ def find_next_dir(path, shape):
     return dir
 
 
-def fint_next_shortcut_dir(snake, food, path, shape):
+def find_next_shortcut_dir(snake, food, path, shape):
     '''
     find_next_shortcut_dir - find the next direction the snake should take
     so it reaches the food
@@ -77,8 +80,8 @@ def fint_next_shortcut_dir(snake, food, path, shape):
     path_node = path[snake[0]]
     food_dist = nav.path_distance(path_node, path[food], shape)
     tail_dist = nav.path_distance(path_node, path[tail], shape)
-    cutting_amount_available = tail_dist - snake_size - 3 # allow a small buffer
-    empty_nodes = shape_size - snake_size # account for food
+    cutting_amount_available = tail_dist - snake_size - 3  # allow a small buffer
+    empty_nodes = shape_size - snake_size  # account for food
 
     # If we don't have much space (i.e. snake is 75% of board) then don't take any shortcuts
     if empty_nodes < shape_size / 2:
@@ -96,6 +99,7 @@ def fint_next_shortcut_dir(snake, food, path, shape):
         cutting_amount_available = cutting_amount_desired
     if cutting_amount_available < 0:
         cutting_amount_available = 0
+
     # cutting_amount_available is now the maximum amout the snake can cut by
 
     def can_go(dir: Dir):
@@ -108,7 +112,7 @@ def fint_next_shortcut_dir(snake, food, path, shape):
         return True
 
     dir_array = nav.get_dir_array()
-    can_go_arr = np.zeros(len(dir_array), dtype = bool)
+    can_go_arr = np.zeros(len(dir_array), dtype=bool)
     best_dir = None
     best_dist = -1
     for i in range(len(dir_array)):
@@ -148,9 +152,11 @@ def create_path_directions(path, shape):
     path_directions : array
         an array of path directions the snake should follow
     '''
-    path_directions = np.zeros(shape = len(path), dtype=Dir)
+    path_directions = np.zeros(shape=len(path), dtype=Dir)
+
     def get_node_id(val):
         return np.where(path == val)[0][0]
+
     initial_id = get_node_id(0)
     prev_node_id = initial_id
     for i in range(1, len(path)):
@@ -163,6 +169,7 @@ def create_path_directions(path, shape):
     if dir is not None:
         path_directions[-1] = dir
     return path_directions
+
 
 def set_path_dir_index(snake_head, path):
     '''

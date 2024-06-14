@@ -1,4 +1,3 @@
-
 import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -6,13 +5,17 @@ import numpy as np
 from itertools import combinations
 import scipy as sp
 from IPython.display import HTML, SVG, display, Video
+import pandas as pd
 
 import nav
 from nav import Dir, Axis, Dmn
 
 import hamilton_cycle_generator as hcg
+from move_algo import Algo
 
+# Disable jupyter auto-show of plots
 plt.ioff()
+
 
 def create_graph_edges(nodes, is_weighted):
     '''
@@ -42,8 +45,9 @@ def create_graph_edges(nodes, is_weighted):
             edges[i] += (rand_weight,)
     return edges
 
+
 def draw_graph_edges(G, edges, pos, is_directed, is_weighted,
-                     width = 3, arrowstyle = "->", arrowsize = 20):
+                     width=3, arrowstyle="->", arrowsize=20):
     '''
     draw the edges of the specified graph
 
@@ -73,27 +77,29 @@ def draw_graph_edges(G, edges, pos, is_directed, is_weighted,
     arrowsize : integer, optional
         size of the arrow, if the graph is directed, by default 20
     '''
-    def draw_edges(edge_list, alpha = None, edge_color="k", style="solid"):
+
+    def draw_edges(edge_list, alpha=None, edge_color="k", style="solid"):
         if is_directed:
-            nx.draw_networkx_edges(G, pos, edgelist = edge_list, width = width,
-                                   alpha = alpha, edge_color = edge_color, style = style,
-                                   arrowstyle = arrowstyle, arrowsize = arrowsize)
+            nx.draw_networkx_edges(G, pos, edgelist=edge_list, width=width,
+                                   alpha=alpha, edge_color=edge_color, style=style,
+                                   arrowstyle=arrowstyle, arrowsize=arrowsize)
         else:
-            nx.draw_networkx_edges(G, pos, edgelist = edge_list, width = width,
-                                  alpha = alpha, edge_color = edge_color, style = style)
+            nx.draw_networkx_edges(G, pos, edgelist=edge_list, width=width,
+                                   alpha=alpha, edge_color=edge_color, style=style)
 
     if is_weighted:
         large_edges = [(u, v) for (u, v, d) in G.edges(data=True) if d["weight"] > 0.5]
         small_edges = [(u, v) for (u, v, d) in G.edges(data=True) if d["weight"] <= 0.5]
-        draw_edges(edge_list = large_edges)
-        draw_edges(edge_list = small_edges, alpha = 0.5, edge_color = "b", style = "dashed")
+        draw_edges(edge_list=large_edges)
+        draw_edges(edge_list=small_edges, alpha=0.5, edge_color="b", style="dashed")
         # edge weight labels
         edge_labels = nx.get_edge_attributes(G, "weight")
         nx.draw_networkx_edge_labels(G, pos, edge_labels)
     else:
-        draw_edges(edge_list = edges)
+        draw_edges(edge_list=edges)
 
-def graph_example(title, is_directed = False, is_weighted = False, node_count = 6, dpi = 240, seed = 6):
+
+def graph_example(title, is_directed=False, is_weighted=False, node_count=6, dpi=240, seed=6):
     '''
     render a graph example
 
@@ -130,7 +136,7 @@ def graph_example(title, is_directed = False, is_weighted = False, node_count = 
     else:
         G.add_edges_from(edges)
 
-    pos = nx.spring_layout(G, seed = seed)
+    pos = nx.spring_layout(G, seed=seed)
 
     # nodes
     nx.draw_networkx_nodes(G, pos, node_size=700)
@@ -141,7 +147,8 @@ def graph_example(title, is_directed = False, is_weighted = False, node_count = 
     plt.title(title)
     plt.show()
 
-def draw_grid_graph(title, m, n, edges_to_remove = [], node_color = "blue", node_size = 600):
+
+def draw_grid_graph(title, m, n, edges_to_remove=[], node_color="blue", node_size=600):
     '''
     draw a grid graph with the specified size
 
@@ -167,8 +174,8 @@ def draw_grid_graph(title, m, n, edges_to_remove = [], node_color = "blue", node
     '''
     G = nx.grid_2d_graph(m, n)
 
-    plt.figure(figsize=(6,6))
-    pos = {(x,y):(y,-x) for x,y in G.nodes()}
+    plt.figure(figsize=(6, 6))
+    pos = {(x, y): (y, -x) for x, y in G.nodes()}
     if len(edges_to_remove) != 0:
         G.remove_edges_from(edges_to_remove)
 
@@ -194,11 +201,12 @@ def draw_diracs_theorem():
     # nodes
     nx.draw_networkx_nodes(G, pos, node_size=2800)
     # node labels
-    labels = {i : f'Degree: {G.degree[i]}' for i in range(len(nodes))}
-    nx.draw_networkx_labels(G, pos, labels = labels, font_size=10, font_family="sans-serif")
-    draw_graph_edges(G, edges, pos, is_directed = False, is_weighted = False)
+    labels = {i: f'Degree: {G.degree[i]}' for i in range(len(nodes))}
+    nx.draw_networkx_labels(G, pos, labels=labels, font_size=10, font_family="sans-serif")
+    draw_graph_edges(G, edges, pos, is_directed=False, is_weighted=False)
     plt.title(f'Dirac\'s Theorem\nVertices: {len(nodes)}')
     plt.show()
+
 
 def draw_ores_theorem():
     '''
@@ -215,11 +223,12 @@ def draw_ores_theorem():
     # nodes
     nx.draw_networkx_nodes(G, pos, node_size=2800)
     # node labels
-    labels = {i : f'Degree: {G.degree[i]}' for i in range(len(nodes))}
-    nx.draw_networkx_labels(G, pos, labels = labels, font_size=10, font_family="sans-serif")
-    draw_graph_edges(G, edges, pos, is_directed = False, is_weighted = False)
+    labels = {i: f'Degree: {G.degree[i]}' for i in range(len(nodes))}
+    nx.draw_networkx_labels(G, pos, labels=labels, font_size=10, font_family="sans-serif")
+    draw_graph_edges(G, edges, pos, is_directed=False, is_weighted=False)
     plt.title(f'Ore\'s Theorem\nVertices: {len(nodes)}')
     plt.show()
+
 
 def draw_hamilton_example():
     '''
@@ -236,9 +245,10 @@ def draw_hamilton_example():
                 pass
             else:
                 edges_to_remove.append([(j, i), (j, i + 1)])
-    draw_grid_graph("Hamiltonian Cycle with one even dimension", m, n, edges_to_remove, node_size = 300)
+    draw_grid_graph("Hamiltonian Cycle with one even dimension", m, n, edges_to_remove, node_size=300)
 
-def animate_prim_mst(shape, seed, is_html = False, node_size = 300):
+
+def animate_prim_mst(shape, seed, is_html=False, node_size=300):
     mst, mst_edge_order = hcg.generate_prim_mst(shape, seed)
     hamilton_path = hcg.generate_hamilton_cycle(mst, shape)
 
@@ -275,18 +285,16 @@ def animate_prim_mst(shape, seed, is_html = False, node_size = 300):
         left, right = ax.get_xlim()
         bottom, top = ax.get_ylim()
 
-
         xs = [left, left, right, right, left]
         ys = [top, bottom, bottom, top, top]
-
 
         plt.scatter(xs, ys)
 
         nx.draw(G, pos=prim_pos,
-            node_color="blue",
-            with_labels = True,
-            node_size=node_size,
-            font_color="white")
+                node_color="blue",
+                with_labels=True,
+                node_size=node_size,
+                font_color="white")
 
         #nx.draw(h_graph, pos = h_pos, node_color = "cyan", with_labels = True, node_size = node_size, font_color = "black")
 
@@ -350,7 +358,8 @@ def plot_functions(function_array, x_max, y_max, title, x_label, y_label):
     plt.title(title)
     plt.show()
 
-def plot_time_complexity(n = 15):
+
+def plot_time_complexity(n=15):
     '''
     plot the different complexity classes
 
@@ -360,17 +369,53 @@ def plot_time_complexity(n = 15):
         number of items to be calculated
     '''
     classes = np.array([("$\mathcal{O}\left(1\\right)$", lambda n: 1),
-                        ("$\mathcal{O}\left(n\\right)$", lambda n : n),
-                        ("$\mathcal{O}\left({n * log\left(n\\right)}\\right)$", lambda n : n * np.log(n) if n > 0 else 0),
-                        ("$\mathcal{O}\left({n^2}\\right)$", lambda n : n ** 2),
-                        ("$\mathcal{O}\left({n^3}\\right)$", lambda n : n ** 3),
-                        ("$\mathcal{O}\left({2^n}\\right)$", lambda n : 2 ** n),
-                        ("$\mathcal{O}\left({n!}\\right)$", lambda n : sp.special.gamma(n))])
+                        ("$\mathcal{O}\left(n\\right)$", lambda n: n),
+                        (
+                            "$\mathcal{O}\left({n * log\left(n\\right)}\\right)$",
+                            lambda n: n * np.log(n) if n > 0 else 0),
+                        ("$\mathcal{O}\left({n^2}\\right)$", lambda n: n ** 2),
+                        ("$\mathcal{O}\left({n^3}\\right)$", lambda n: n ** 3),
+                        ("$\mathcal{O}\left({2^n}\\right)$", lambda n: 2 ** n),
+                        ("$\mathcal{O}\left({n!}\\right)$", lambda n: sp.special.gamma(n))])
 
     plot_functions(classes, n, n, "Different complexity classes", "Input size n", "Time")
+
 
 def get_video(path):
     return HTML(f'\
     <video alt="test" controls>\
         <source src="{path}" type="video/mp4">\
     </video>')
+
+
+def plot_simulation_data(path):
+    get_key = lambda shape, seed, algo, game: f'shape_{shape[Dmn.H]}x{shape[Dmn.W]}_seed_{seed}_algo_{algo}_game_{game}'
+
+    sim_data = pd.read_json(path).to_dict()
+
+    params = sim_data["params"]
+    node_shapes = params["node_shapes"]
+    seeds = params["seeds"]
+    games_per_seed = params["games_per_seed"]
+
+    rng = np.random.default_rng()
+    rand_shape = rng.choice(node_shapes)
+    rand_seed = rng.choice(seeds)
+    rand_game = np.random.randint(games_per_seed)
+
+    data = sim_data["data"]
+    moves_full = data[get_key(rand_shape, rand_seed, Algo.FOLLOW_PATH, rand_game)]
+    moves_shortcut = data[get_key(rand_shape, rand_seed, Algo.TAKE_SHORTCUTS, rand_game)]
+    xs = np.arange(len(moves_full))
+    plt.bar(xs, moves_full, label="Snake follow full path")
+    plt.bar(xs, moves_shortcut, label="Snake takes shortcut", alpha=0.5)
+    plt.xlabel("Food generated")
+    plt.ylabel("Moves taken to eat the food")
+    plt.title(f'Game of snake for grid {rand_shape[Dmn.H]}x{rand_shape[Dmn.W]}, seed: {rand_seed}')
+    ax = plt.gca()
+    ax.set_aspect('equal')
+    plt.legend()
+    plt.show()
+
+
+plot_simulation_data('data/simulation.json')

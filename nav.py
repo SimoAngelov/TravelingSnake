@@ -1,6 +1,7 @@
 import numpy as np
 from enum import Enum, IntEnum
 
+
 class Axis(IntEnum):
     ''' Enumerate axis '''
 
@@ -13,6 +14,7 @@ class Axis(IntEnum):
     COUNT = 2
     ''' number of axes '''
 
+
 class Dmn(IntEnum):
     ''' Enumerate dimensions '''
     H = 0
@@ -20,6 +22,7 @@ class Dmn(IntEnum):
 
     W = 1
     ''' width '''
+
 
 class Dir(Enum):
     '''  Enumerate directions '''
@@ -31,6 +34,7 @@ class Dir(Enum):
     ''' Down direction '''
     Left = 3
     ''' Left direction '''
+
 
 def get_next_pos(pos, dir: Dir):
     '''
@@ -59,13 +63,14 @@ def get_next_pos(pos, dir: Dir):
     if not isinstance(dir, Dir):
         raise TypeError("dir is not type Dir")
     offsets = {
-        Dir.Up: create_pos(y = -1),
-        Dir.Right: create_pos(x = 1),
-        Dir.Down: create_pos(y = 1),
-        Dir.Left: create_pos(x = -1)
+        Dir.Up: create_pos(y=-1),
+        Dir.Right: create_pos(x=1),
+        Dir.Down: create_pos(y=1),
+        Dir.Left: create_pos(x=-1)
     }
     next_pos = pos + offsets.get(dir, create_pos())
     return next_pos
+
 
 def is_dir(mask: np.int8, dir: Dir):
     '''
@@ -91,6 +96,7 @@ def is_dir(mask: np.int8, dir: Dir):
     if not isinstance(dir, Dir):
         raise TypeError("dir is not type Dir")
     return bool((mask >> dir.value) & 1)
+
 
 def set_dir(mask: np.int8, dir: Dir):
     '''
@@ -118,7 +124,8 @@ def set_dir(mask: np.int8, dir: Dir):
         raise TypeError("dir is not type Dir")
     return mask | 1 << dir.value
 
-def get_dir_array(start: Dir = Dir.Up, offset = 0):
+
+def get_dir_array(start: Dir = Dir.Up, offset=0):
     '''
     retrieve an array of directions
 
@@ -147,7 +154,8 @@ def get_dir_array(start: Dir = Dir.Up, offset = 0):
     dir_array = np.roll(dir_array, -start.value + offset)
     return dir_array
 
-def create_pos(x = 0, y = 0):
+
+def create_pos(x=0, y=0):
     '''
     create x, y position array
 
@@ -164,7 +172,8 @@ def create_pos(x = 0, y = 0):
     array
         an array with the x, y values
     '''
-    return np.array([x, y], dtype = np.int64)
+    return np.array([x, y], dtype=np.int64)
+
 
 def create_random_pos(shape):
     '''
@@ -183,6 +192,7 @@ def create_random_pos(shape):
     x_rand = np.random.randint(shape[Dmn.W])
     y_rand = np.random.randint(shape[Dmn.H])
     return create_pos(x_rand, y_rand)
+
 
 def get_node_pos(id, shape):
     '''
@@ -204,6 +214,7 @@ def get_node_pos(id, shape):
     x = np.int64(id % shape[Dmn.W])
     y = np.int64(id / shape[Dmn.W])
     return create_pos(x, y)
+
 
 def get_node_id(pos, shape):
     '''
@@ -228,6 +239,7 @@ def get_node_id(pos, shape):
 
     node_id = np.int64(pos[Axis.X] + pos[Axis.Y] * shape[Dmn.W])
     return node_id
+
 
 def get_next_node_id(node_id, dir, shape):
     '''
@@ -254,6 +266,7 @@ def get_next_node_id(node_id, dir, shape):
     next_pos = get_next_pos(curr_pos, dir)
     next_node_id = get_node_id(next_pos, shape)
     return next_node_id
+
 
 def get_dir_between(start, end, node_shape):
     '''
@@ -285,6 +298,7 @@ def get_dir_between(start, end, node_shape):
         dir = Dir.Down if start_pos[Axis.Y] - end_pos[Axis.Y] < 0 else Dir.Up
     return dir
 
+
 def path_distance(start_node, end_node, shape):
     '''
     retrieve the path distance between two nodes
@@ -308,6 +322,7 @@ def path_distance(start_node, end_node, shape):
     if (start_node < end_node):
         return end_node - start_node - 1
     return end_node - start_node - 1 + shape[Dmn.W] * shape[Dmn.H]
+
 
 def is_out_of_bounds(pos, shape):
     '''

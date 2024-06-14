@@ -3,7 +3,7 @@ import nav
 from nav import Dir, Axis, Dmn
 
 
-def generate_path(shape, seed = 0, is_print_mst = False):
+def generate_path(shape, seed=0, is_print_mst=False):
     '''
     generate hamiltonian path
 
@@ -32,7 +32,7 @@ def generate_path(shape, seed = 0, is_print_mst = False):
     # The shape doesn't contain a valid hamiltonian cycle
     if shape[Dmn.W] * shape[Dmn.H] % 2 != 0 or shape[Dmn.W] == 1 or shape[Dmn.H] == 1:
         raise ValueError(f'failed to generate path! shape: {shape} is not even in any dimension!')
-        return np.empty(shape = 0, dtype=np.int64)
+        return np.empty(shape=0, dtype=np.int64)
 
     # The shape has an odd dimension, so Prim's MST can't be used in this case
     if shape[Dmn.W] % 2 != 0 or shape[Dmn.H] % 2 != 0:
@@ -54,7 +54,8 @@ def generate_path(shape, seed = 0, is_print_mst = False):
         print(f'mst_edge_order:\n{mst_edge_order}')
     return generate_hamilton_cycle(mst, shape)
 
-def generate_prim_mst(shape, seed = None):
+
+def generate_prim_mst(shape, seed=None):
     '''
     generate a minimum spanning tree (MST), using Prim's algorithm.
     Randomized choice is used to substitute the edge weights.
@@ -77,17 +78,17 @@ def generate_prim_mst(shape, seed = None):
         indices are nodes, values are direction masks,
 
     '''
-    seed_seq = np.random.SeedSequence(entropy = seed)
+    seed_seq = np.random.SeedSequence(entropy=seed)
     rng = np.random.default_rng(seed_seq)
     prim_shape = nav.create_pos(shape[Dmn.H] / 2, shape[Dmn.W] / 2)
 
     size = prim_shape[Dmn.W] * prim_shape[Dmn.H]
     # Initialize the MST as an array. The indices are node ids, the values are bit masks
     # that encode the directions to the node's neighbors.
-    mst = np.zeros(size, dtype = np.int8)
+    mst = np.zeros(size, dtype=np.int8)
 
     # Keep track of the order the edges were formed
-    edge_order = np.zeros(shape = (size -1, Axis.COUNT), dtype = np.int64)
+    edge_order = np.zeros(shape=(size - 1, Axis.COUNT), dtype=np.int64)
 
     # Create an adjacency list for each node in the grid
     # The indices of the array are node ids. The values of the array are dictionaries with
@@ -96,11 +97,11 @@ def generate_prim_mst(shape, seed = None):
     adjacency_arr = np.array([{} for _ in range(size)])
     dir_array = nav.get_dir_array()
     for node_id in range(size):
-            for dir_id in range(len(dir_array)):
-                dir = dir_array[dir_id]
-                neighbor_id = nav.get_next_node_id(node_id, dir, prim_shape)
-                if neighbor_id is not None:
-                    adjacency_arr[node_id][neighbor_id] = dir
+        for dir_id in range(len(dir_array)):
+            dir = dir_array[dir_id]
+            neighbor_id = nav.get_next_node_id(node_id, dir, prim_shape)
+            if neighbor_id is not None:
+                adjacency_arr[node_id][neighbor_id] = dir
 
     # Choose a random node to be the start of the MST
     start = rng.integers(0, size)
@@ -145,6 +146,7 @@ def generate_prim_mst(shape, seed = None):
         i += 1
 
     return (mst, edge_order)
+
 
 def generate_hamilton_cycle(mst, shape):
     '''
@@ -197,7 +199,7 @@ def generate_hamilton_cycle(mst, shape):
     pos = nav.create_pos()
     dir = Dir.Up if can_go(Dir.Down, pos) else Dir.Left
     curr_square = 0
-    start_offsets = np.array([nav.create_pos(y = 1), nav.create_pos(), nav.create_pos(x = 1), nav.create_pos(1, 1)])
+    start_offsets = np.array([nav.create_pos(y=1), nav.create_pos(), nav.create_pos(x=1), nav.create_pos(1, 1)])
 
     while True:
         next_dir = find_next_dir(pos, dir, can_go)
@@ -225,6 +227,7 @@ def generate_hamilton_cycle(mst, shape):
         if curr_square >= hamilton_cycle.size:
             break
     return hamilton_cycle
+
 
 def find_next_dir(pos, dir: Dir, can_go):
     '''
@@ -257,6 +260,7 @@ def find_next_dir(pos, dir: Dir, can_go):
     # return the inverted dir
     return next_dir_array[-1]
 
+
 def set_path_square(path, path_square, pos, shape):
     '''
     set a path square at the specified position
@@ -279,6 +283,7 @@ def set_path_square(path, path_square, pos, shape):
     if (path[node_id] == 0):
         path[node_id] = path_square
 
+
 def get_turning_points_odd_w(w, h, get_id):
     '''
     retrieve a dictionary of turning points where the path has an odd width
@@ -299,7 +304,7 @@ def get_turning_points_odd_w(w, h, get_id):
         turning_points : dict
         a dictionary of turning mode ids and directions they turn
     '''
-    turning_points = {get_id(x = w - 1) : Dir.Down}
+    turning_points = {get_id(x=w - 1): Dir.Down}
     switch = False
     for i in range(1, h):
         x1 = 1 if i % 2 == 0 else w - 1
@@ -309,7 +314,7 @@ def get_turning_points_odd_w(w, h, get_id):
         if i < h - 1:
             turning_points[get_id(x2, i)] = Dir.Down
 
-    turning_points[get_id(y = h - 1)] = Dir.Up
+    turning_points[get_id(y=h - 1)] = Dir.Up
     return turning_points
 
 
@@ -333,7 +338,7 @@ def get_turning_points_odd_h(w, h, get_id):
         turning_points : dict
         a dictionary of turning mode ids and directions they turn
     '''
-    turning_points = {get_id(x = w - 1) : Dir.Down}
+    turning_points = {get_id(x=w - 1): Dir.Down}
     switch = False
     for i in range(w - 1, -1, -1):
         y1 = 1 if i % 2 == 0 else h - 1
@@ -362,9 +367,9 @@ def generate_path_with_odd_dimension(shape):
     '''
     w = shape[Dmn.W]
     h = shape[Dmn.H]
-    get_id = lambda x = 0, y = 0: nav.get_node_id(nav.create_pos(x, y), shape)
+    get_id = lambda x=0, y=0: nav.get_node_id(nav.create_pos(x, y), shape)
 
-    path = np.zeros(shape = w * h, dtype = np.int64)
+    path = np.zeros(shape=w * h, dtype=np.int64)
     turning_points = {}
     if h % 2 != 0:
         turning_points = get_turning_points_odd_h(w, h, get_id)

@@ -1,4 +1,3 @@
-
 import numpy as np
 from enum import IntEnum
 import json
@@ -8,11 +7,13 @@ import move_algo
 from move_algo import Algo
 import hamilton_cycle_generator as hcg
 
+
 class SnakeStatus(IntEnum):
     MOVING = 0
     ATE_FOOD = 1
     LOST = 2
     WON = 3
+
 
 def create_empty_snake():
     '''
@@ -23,7 +24,8 @@ def create_empty_snake():
     array
         the empty snake array
     '''
-    return np.empty(shape = 0, dtype = np.int64)
+    return np.empty(shape=0, dtype=np.int64)
+
 
 def create_food(snake, all_nodes, seed):
     '''
@@ -49,11 +51,12 @@ def create_food(snake, all_nodes, seed):
     free = np.setdiff1d(all_nodes, snake)
     if (len(free) == 0):
         return -1
-    seed_seq = np.random.SeedSequence(entropy = seed)
+    seed_seq = np.random.SeedSequence(entropy=seed)
     rng = np.random.default_rng(seed_seq)
     return rng.choice(free)
 
-def move(snake, dir : Dir, food, all_nodes, seed, node_shape):
+
+def move(snake, dir: Dir, food, all_nodes, seed, node_shape):
     '''
     move the snake and check for collisions
 
@@ -107,23 +110,24 @@ def move(snake, dir : Dir, food, all_nodes, seed, node_shape):
 
     return snake, food, status
 
+
 def run_test(node_shape, algo, seed):
     node_shape = nav.create_pos(node_shape[Dmn.H], node_shape[Dmn.W])
     hamilton = hcg.generate_path(node_shape, seed)
     all_nodes = np.arange(node_shape[Dmn.W] * node_shape[Dmn.H])
-    snake = np.random.randint(len(all_nodes), size = 1)
+    snake = np.random.randint(len(all_nodes), size=1)
     food = create_food(snake, all_nodes, seed)
     move_algo.set_path_dir_index(snake[0], hamilton)
     status = SnakeStatus.MOVING
 
-    all_moves = np.zeros(shape = len(all_nodes) - 1, dtype = np.int64)
+    all_moves = np.zeros(shape=len(all_nodes) - 1, dtype=np.int64)
     curr_move = 0
     while status not in [SnakeStatus.WON, SnakeStatus.LOST]:
         dir = None
         if (algo is Algo.FOLLOW_PATH):
             dir = move_algo.find_next_dir(hamilton, node_shape)
         elif algo is Algo.TAKE_SHORTCUTS:
-            dir = move_algo.fint_next_shortcut_dir(snake, food, hamilton, node_shape)
+            dir = move_algo.find_next_shortcut_dir(snake, food, hamilton, node_shape)
 
         if dir is None:
             break
@@ -134,8 +138,8 @@ def run_test(node_shape, algo, seed):
             curr_move += 1
     return all_moves
 
-def run_simulation(sim_params, save_path):
 
+def run_simulation(sim_params, save_path):
     seed_count = sim_params["seed_count"]
     games_per_seed = sim_params["games_per_seed"]
     shapes = sim_params["node_shapes"]
@@ -147,17 +151,15 @@ def run_simulation(sim_params, save_path):
     results["data"] = {}
     for seed in seeds:
         for shape in shapes:
-                shape_key = f'shape_{shape[Dmn.H]}x{shape[Dmn.W]}'
-                results["data"][shape_key] = {}
-                total_size = shape[Dmn.H] * shape[Dmn.W]
-                for game in range(games_per_seed):
-                    algos = [Algo.FOLLOW_PATH, Algo.TAKE_SHORTCUTS]
-                    for algo in algos:
-                        moves_key = f'seed_{seed}_algo_{algo}_game_{game}'
-                        print(f'test shape_key[{shape_key}], moves_key[{moves_key}]')
-                        moves = run_test(shape, algo, seed)
-                        results["data"][shape_key][moves_key] = moves.tolist()
-                        print(f'results -> shape_key[{shape_key}], moves_key[{moves_key}], moves: {moves}')
+            data_key = f''
+            total_size = shape[Dmn.H] * shape[Dmn.W]
+            for game in range(games_per_seed):
+                algos = [Algo.FOLLOW_PATH, Algo.TAKE_SHORTCUTS]
+                for algo in algos:
+                    moves_key = f'shape_{shape[Dmn.H]}x{shape[Dmn.W]}_seed_{seed}_algo_{algo}_game_{game}'
+                    print(f'test {moves_key}')
+                    moves = run_test(shape, algo, seed)
+                    results["data"][moves_key] = moves.tolist()
 
     # Save results to json file
     json_object = json.dumps(results, indent=4)
