@@ -3,7 +3,7 @@ from enum import Enum, IntEnum
 
 
 class Axis(IntEnum):
-    ''' Enumerate axis '''
+    ''' Enumerate axes '''
 
     X = 0
     ''' X axis '''
@@ -175,25 +175,6 @@ def create_pos(x=0, y=0):
     return np.array([x, y], dtype=np.int64)
 
 
-def create_random_pos(shape):
-    '''
-    create random position
-
-    Parameters
-    ----------
-    shape : array
-        node shape HxW - number of nodes in the height and width dimensions
-
-    Returns
-    ----------
-    array
-        an array with the x, y values
-    '''
-    x_rand = np.random.randint(shape[Dmn.W])
-    y_rand = np.random.randint(shape[Dmn.H])
-    return create_pos(x_rand, y_rand)
-
-
 def get_node_pos(id, shape):
     '''
     retrieve the position of the specified node
@@ -234,7 +215,7 @@ def get_node_id(pos, shape):
         the id of the node at the specified position
         If pos is out of the bounds of shape, None is returned
     '''
-    if pos[Axis.X] < 0 or pos[Axis.X] >= shape[Dmn.W] or pos[Axis.Y] < 0 or pos[Axis.Y] >= shape[Dmn.H]:
+    if is_out_of_bounds(pos, shape):
         return None
 
     node_id = np.int64(pos[Axis.X] + pos[Axis.Y] * shape[Dmn.W])

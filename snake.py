@@ -93,20 +93,20 @@ def move(snake, dir: Dir, food, all_nodes, seed, node_shape):
     if not isinstance(dir, Dir):
         raise TypeError(f'dir: {dir} isn\'t of type Dir')
     new_head = nav.get_next_node_id(snake[0], dir, node_shape)
-    if new_head is None:
-        raise AssertionError(f'new_head is none! snake[0]: {snake[0]}, dir: {dir}, node_shape: {node_shape}')
-
-    status = SnakeStatus.MOVING
-    if (new_head == food):
-        snake = np.append([food], snake)
-        food = create_food(snake, all_nodes, seed)
-        status = SnakeStatus.WON if food == -1 else SnakeStatus.ATE_FOOD
-    elif (new_head in snake):
-        snake = create_empty_snake()
+    if new_head is None:  # if the head is out of the bounds of the shape
         status = SnakeStatus.LOST
-    else:
-        snake = np.roll(snake, 1)
-        snake[0] = new_head
+    else:  # if the head is inside shape
+        status = SnakeStatus.MOVING
+        if new_head == food:
+            snake = np.append([food], snake)
+            food = create_food(snake, all_nodes, seed)
+            status = SnakeStatus.WON if food == -1 else SnakeStatus.ATE_FOOD
+        elif new_head in snake:
+            snake = create_empty_snake()
+            status = SnakeStatus.LOST
+        else:
+            snake = np.roll(snake, 1)
+            snake[0] = new_head
 
     return snake, food, status
 
@@ -115,7 +115,9 @@ def run_test(node_shape, algo, seed):
     node_shape = nav.create_pos(node_shape[Dmn.H], node_shape[Dmn.W])
     hamilton = hcg.generate_path(node_shape, seed)
     all_nodes = np.arange(node_shape[Dmn.W] * node_shape[Dmn.H])
-    snake = np.random.randint(len(all_nodes), size=1)
+    seed_seq = np.random.SeedSequence(entropy=seed)
+    rng = np.random.default_rng(seed_seq)
+    snake = rng.integers(len(all_nodes), size=1, dtype=int)
     food = create_food(snake, all_nodes, seed)
     move_algo.set_path_dir_index(snake[0], hamilton)
     status = SnakeStatus.MOVING

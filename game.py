@@ -54,6 +54,11 @@ class SnakeGame(arcade.Window):
             whether to draw the hamiltonian path flat below the grid
         '''
         self.m_node_shape = nav.create_pos(node_shape[Dmn.H], node_shape[Dmn.W])
+        # Limit the size of the node shape
+        if is_draw_flat_path:
+            self.m_node_shape[Dmn.H] = min(self.m_node_shape[Dmn.H], 6)
+            self.m_node_shape[Dmn.W] = min(self.m_node_shape[Dmn.W], 6)
+
         self.m_node_size = node_size
         self.m_algo = algo
         self.m_seed = seed
@@ -89,6 +94,7 @@ class SnakeGame(arcade.Window):
                     row = ""
             print(f'\n\npath:\n{self.m_path}')
         if is_show_path or is_draw_flat_path:
+            print(f'Creating grid sprite. Please wait...')
             self.m_path_lists = du.create_path_lists(self.m_path, self.m_node_size, self.m_node_shape,
                                                      self.m_grid_size[Dmn.W], self.m_grid_size[Dmn.H],
                                                      offset = self.m_grid_offset)
@@ -99,14 +105,16 @@ class SnakeGame(arcade.Window):
     def setup(self):
         """ Set up the game variables. Call to re-start the game. """
         self.m_all_nodes = np.arange(self.m_node_shape[Dmn.W] * self.m_node_shape[Dmn.H])
-        self.m_snake = np.random.randint(len(self.m_all_nodes), size = 1)
+
+        seed_seq = np.random.SeedSequence(entropy=self.m_seed)
+        rng = np.random.default_rng(seed_seq)
+        self.m_snake = rng.integers(len(self.m_all_nodes), size=1, dtype=int)
         self.m_food = snake.create_food(self.m_snake, self.m_all_nodes, self.m_seed)
         move_algo.set_path_dir_index(self.m_snake[0], self.m_path)
 
         self.recreate_lists()
 
     def on_draw(self):
-        #arcade.set_window(self._window)
         """
         Render the screen.
         """
@@ -140,31 +148,34 @@ class SnakeGame(arcade.Window):
         """
         if self.m_is_pause_update:
             return
-        self.algo_step(self.m_algo)
+
+        if self.m_algo is Algo.NONE:
+            self.move_snake(self.m_head_dir)
+        else:
+            self.algo_step(self.m_algo)
 
 
     def on_key_press(self, key, key_modifiers):
         if key == arcade.key.P:
             self.m_is_pause_update = not self.m_is_pause_update
 
-        if key == arcade.key.N:
-            self.algo_step(Algo.TAKE_SHORTCUTS)
-
         if key == arcade.key.G:
             image = arcade.draw_commands.get_image(x=0, y=0, width=None, height=None)
             title = f'data/screenshot_{time.time()}.png'
             image.save(title, 'PNG')
 
-        dirs = {
-             arcade.key.W : Dir.Up,
-             arcade.key.A: Dir.Left,
-             arcade.key.S: Dir.Down,
-             arcade.key.D: Dir.Right
-        }
-        dir = dirs.get(key)
-        if dir is not None:
-            self.move_snake(dir)
-
+        if self.m_algo is Algo.NONE:
+            dirs = {
+                 arcade.key.W: Dir.Up,
+                 arcade.key.A: Dir.Left,
+                 arcade.key.S: Dir.Down,
+                 arcade.key.D: Dir.Right
+            }
+            dir = dirs.get(key)
+            if dir is not None:
+                self.m_head_dir = dir
+        elif key == arcade.key.N:
+            self.algo_step(self.m_algo)
 
     def algo_step(self, algo : Algo):
         '''
