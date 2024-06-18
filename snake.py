@@ -9,6 +9,7 @@ import hamilton_cycle_generator as hcg
 
 
 class SnakeStatus(IntEnum):
+    ''' Enumerate the possible states of the snake game '''
     MOVING = 0
     ATE_FOOD = 1
     LOST = 2
@@ -112,6 +113,25 @@ def move(snake, dir: Dir, food, all_nodes, seed, node_shape):
 
 
 def run_test(node_shape, algo, seed):
+    '''
+
+    Parameters
+    ----------
+    node_shape : array
+        node shape HxW - number of nodes in the height and width dimensions
+
+    algo : Algo
+        algorithm to be tested
+
+    seed : integer
+        rng seed for reproducibility
+
+    Returns
+    -------
+    all_moves : array
+        an array where the index is the number of foods, eaten by the snake and the value is the number of moves it took
+        for the snake to eat the particular piece of food
+    '''
     node_shape = nav.create_pos(node_shape[Dmn.H], node_shape[Dmn.W])
     hamilton = hcg.generate_path(node_shape, seed)
     all_nodes = np.arange(node_shape[Dmn.W] * node_shape[Dmn.H])
@@ -142,6 +162,16 @@ def run_test(node_shape, algo, seed):
 
 
 def run_simulation(sim_params, save_path):
+    '''
+    run a simulation from the specified parameters and save the results.
+    Parameters
+    ----------
+    sim_params : dict
+        contains the configuration parameters for the simulation
+
+    save_path : string
+        path of the json where the results will be saved.
+    '''
     seed_count = sim_params["seed_count"]
     games_per_seed = sim_params["games_per_seed"]
     shapes = sim_params["node_shapes"]

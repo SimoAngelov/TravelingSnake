@@ -6,6 +6,7 @@ from nav import Axis, Dmn, Dir
 
 
 class Algo(IntEnum):
+    ''' Enumerate different snake movement algorithms '''
     FOLLOW_PATH = 0
     TAKE_SHORTCUTS = 1
     NONE = 2

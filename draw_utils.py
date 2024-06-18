@@ -1,4 +1,3 @@
-import arcade.color
 import numpy as np
 import arcade
 import nav

@@ -158,7 +158,7 @@ def generate_hamilton_cycle(mst, shape):
         mininum spanning tree from which to construct the hamiltonian cycle
 
     shape : array
-        node shape HxW
+        node shape HxW - number of nodes in the height and width dimensions
 
     Returns
     -------
