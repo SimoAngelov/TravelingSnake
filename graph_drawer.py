@@ -433,12 +433,15 @@ def plot_simulation_data(path):
     total_full = np.sum(moves_full)
     total_shortcut = np.sum(moves_shortcut)
     xs = np.arange(len(moves_full))
-    plt.bar(xs, moves_full, label=f'Snake follows full path and makes {total_full} total moves')
-    plt.bar(xs, moves_shortcut, label=f'Snake takes shortcuts and makes {total_shortcut} total moves', alpha=0.5)
+    width = 0.3
+    plt.bar(xs, moves_full, width, label=f'Snake follows full path and makes {total_full} total moves')
+    plt.bar(xs + width, moves_shortcut, width, label=f'Snake takes shortcuts and makes {total_shortcut} total moves')
     plt.xlabel("Pieces of food eaten by the snake")
     plt.ylabel("Moves taken to eat the food")
     plt.title(f'Game of snake for grid {rand_shape[Dmn.H]}x{rand_shape[Dmn.W]}, seed: {rand_seed}')
     ax = plt.gca()
     ax.set_aspect('equal')
     plt.legend()
+    # Figure size
+    plt.rcParams['figure.figsize'] = [50, 10]
     plt.show()
